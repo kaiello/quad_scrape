@@ -1,0 +1,71 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "e43ccea8137e3bd3",
+      "doc_id": "doc-uni",
+      "page_end": 2,
+      "page_start": 1,
+      "sentence_ids": [
+        "a25b0e0f7014f864",
+        "31365d108370261b",
+        "207ee4d27a34636c",
+        "71da47a97c52aa63"
+      ],
+      "text": "Emoji 😀 and accents café naïve. New line after CRLF. Tabs\tand NBSP here. Combining: Á é í ó ú."
+    }
+  ],
+  "doc": {
+    "doc_id": "doc-uni",
+    "num_pages": 2,
+    "pages": [
+      "Emoji 😀 and accents café naïve.\r\nNew line after CRLF. Tabs\tand NBSP here.",
+      "Combining: Á é í ó ú."
+    ],
+    "source_path": "unicode.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "c4b43b451e86e663656cbbbd49b78429344aeb57",
+    "n_chunks": 1,
+    "n_sentences": 4,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 31,
+      "char_start": 0,
+      "doc_id": "doc-uni",
+      "page": 1,
+      "sent_id": "a25b0e0f7014f864",
+      "text": "Emoji 😀 and accents café naïve."
+    },
+    {
+      "char_end": 53,
+      "char_start": 33,
+      "doc_id": "doc-uni",
+      "page": 1,
+      "sent_id": "31365d108370261b",
+      "text": "New line after CRLF."
+    },
+    {
+      "char_end": 73,
+      "char_start": 54,
+      "doc_id": "doc-uni",
+      "page": 1,
+      "sent_id": "207ee4d27a34636c",
+      "text": "Tabs\tand NBSP here."
+    },
+    {
+      "char_end": 26,
+      "char_start": 0,
+      "doc_id": "doc-uni",
+      "page": 2,
+      "sent_id": "71da47a97c52aa63",
+      "text": "Combining: Á é í ó ú."
+    }
+  ]
+}

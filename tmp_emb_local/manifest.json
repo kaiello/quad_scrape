@@ -1,15 +1,8 @@
 {
   "adapter": "local",
-  "count_files": 7,
+  "count_files": 0,
+  "count_rows": 0,
   "dim": 64,
-  "files": [
-    "array_payload.2.normalized.embedded.jsonl",
-    "array_payload.normalized.embedded.jsonl",
-    "nonpdf_simple.normalized.embedded.jsonl",
-    "object_payload.normalized.embedded.jsonl",
-    "pdf_cross_page.normalized.embedded.jsonl",
-    "pdf_simple.normalized.embedded.jsonl",
-    "unicode_mixed.normalized.embedded.jsonl"
-  ],
+  "files": [],
   "model": "local-deterministic"
 }

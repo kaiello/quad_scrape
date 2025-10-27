@@ -1,0 +1,52 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "e8d43146bd61afb5",
+      "doc_id": "d1",
+      "page_end": 1,
+      "page_start": 1,
+      "sentence_ids": [
+        "aa3cda574a53250d",
+        "72854edeb893e5d5"
+      ],
+      "text": "A page one. A page two?"
+    }
+  ],
+  "doc": {
+    "doc_id": "d1",
+    "num_pages": 1,
+    "pages": [
+      "A page one. A page two?"
+    ],
+    "source_path": "a.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "788d9a5a702cc7f81245f8200f43d42f6b7ad140",
+    "n_chunks": 1,
+    "n_sentences": 2,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 11,
+      "char_start": 0,
+      "doc_id": "d1",
+      "page": 1,
+      "sent_id": "aa3cda574a53250d",
+      "text": "A page one."
+    },
+    {
+      "char_end": 23,
+      "char_start": 12,
+      "doc_id": "d1",
+      "page": 1,
+      "sent_id": "72854edeb893e5d5",
+      "text": "A page two?"
+    }
+  ]
+}

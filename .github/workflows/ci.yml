@@ -1,0 +1,52 @@
+name: ci
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Poetry
+        run: |
+          pipx install poetry==1.8.3
+          poetry --version
+
+      - name: Install dependencies
+        run: |
+          poetry install --no-interaction --no-root
+          poetry run pip install -e .
+
+      - name: Run pytest
+        run: |
+          poetry run pytest -q
+
+      - name: Build Step D linked artifacts (optional)
+        if: always()
+        run: |
+          poetry run python -m combo link tests/fixtures/coref \
+            --registry linked_ci_registry.sqlite \
+            --out linked_ci \
+            --link-conf 0.75 \
+            --adapters wikidata,uei \
+            --wikidata-cache tests/fixtures/wikidata_cache.json \
+            --uei-cache tests/fixtures/uei_cache.json || true
+
+      - name: Upload Step D artifacts (optional)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stepD-linked
+          path: |
+            linked_ci/linked.entities.jsonl
+            linked_ci/_reports/run_report.json
+          if-no-files-found: ignore
+

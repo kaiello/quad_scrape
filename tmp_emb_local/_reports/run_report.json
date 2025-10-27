@@ -1,5 +1,7 @@
 {
   "errors": 0,
-  "notes": [],
-  "written": 7
+  "notes": [
+    "force_local"
+  ],
+  "written": 0
 }
