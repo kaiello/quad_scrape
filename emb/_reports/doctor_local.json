@@ -1,0 +1,10 @@
+{
+  "adapter": "local",
+  "dim": 64,
+  "model_name": "local-deterministic",
+  "model_path": null,
+  "smoke_test": {
+    "error": null,
+    "ok": true
+  }
+}

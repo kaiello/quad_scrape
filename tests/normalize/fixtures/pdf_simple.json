@@ -1,0 +1,9 @@
+{
+  "doc_id": "doc-abc",
+  "source_path": "sample.pdf",
+  "pages": [
+    "Alpha bravo.\nCharlie delta.",
+    "Echo foxtrot golf."
+  ],
+  "images": []
+}

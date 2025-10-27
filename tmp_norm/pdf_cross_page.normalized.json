@@ -1,0 +1,71 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "8b118f2bfb0db2a2",
+      "doc_id": "doc-cross",
+      "page_end": 2,
+      "page_start": 1,
+      "sentence_ids": [
+        "40b24e8bde63954f",
+        "1a0d13ae0201b3ff",
+        "28829ba56008a12e",
+        "08ac046f587a88fb"
+      ],
+      "text": "One two three four five. Six seven eight nine ten. Eleven twelve thirteen fourteen. Fifteen sixteen."
+    }
+  ],
+  "doc": {
+    "doc_id": "doc-cross",
+    "num_pages": 2,
+    "pages": [
+      "One two three four five. Six seven eight nine ten.",
+      "Eleven twelve thirteen fourteen. Fifteen sixteen."
+    ],
+    "source_path": "cross.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "e7312fa623b0674487d7aacda105daaa90ec05d0",
+    "n_chunks": 1,
+    "n_sentences": 4,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 24,
+      "char_start": 0,
+      "doc_id": "doc-cross",
+      "page": 1,
+      "sent_id": "40b24e8bde63954f",
+      "text": "One two three four five."
+    },
+    {
+      "char_end": 50,
+      "char_start": 25,
+      "doc_id": "doc-cross",
+      "page": 1,
+      "sent_id": "1a0d13ae0201b3ff",
+      "text": "Six seven eight nine ten."
+    },
+    {
+      "char_end": 32,
+      "char_start": 0,
+      "doc_id": "doc-cross",
+      "page": 2,
+      "sent_id": "28829ba56008a12e",
+      "text": "Eleven twelve thirteen fourteen."
+    },
+    {
+      "char_end": 49,
+      "char_start": 33,
+      "doc_id": "doc-cross",
+      "page": 2,
+      "sent_id": "08ac046f587a88fb",
+      "text": "Fifteen sixteen."
+    }
+  ]
+}

@@ -1,0 +1,26 @@
+[tool.poetry]
+name = "quad-scrape"
+version = "0.1.0"
+description = "Universal text extraction with OCR (transformers/Tesseract/EasyOCR) for PDF, images, DOCX, PPTX, XLSX, CSV"
+authors = ["Your Name <you@example.com>"]
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.8,<3.13"
+Pillow = ">=9.5"
+transformers = ">=4.40"
+torch = ">=2.2"
+pytesseract = ">=0.3.10"
+easyocr = ">=1.7"
+numpy = ">=1.24"
+pymupdf = ">=1.23"
+pypdf = ">=4.0"
+pdf2image = ">=1.17"
+spacy = ">=3.7,<3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+
+[build-system]
+requires = ["poetry-core>=1.8.0"]
+build-backend = "poetry.core.masonry.api"

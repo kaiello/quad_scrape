@@ -1,0 +1,43 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "131ab93eebae6b30",
+      "doc_id": "d3",
+      "page_end": 1,
+      "page_start": 1,
+      "sentence_ids": [
+        "f2eebfc43a38c020"
+      ],
+      "text": "C page lone line."
+    }
+  ],
+  "doc": {
+    "doc_id": "d3",
+    "num_pages": 1,
+    "pages": [
+      "C page lone line."
+    ],
+    "source_path": "c.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "32c985e2d08f46120f922461d3e5c424a9c5eb5c",
+    "n_chunks": 1,
+    "n_sentences": 1,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 17,
+      "char_start": 0,
+      "doc_id": "d3",
+      "page": 1,
+      "sent_id": "f2eebfc43a38c020",
+      "text": "C page lone line."
+    }
+  ]
+}

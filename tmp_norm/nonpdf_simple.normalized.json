@@ -1,0 +1,43 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "961c0e6432295013",
+      "doc_id": "doc-txt",
+      "page_end": 1,
+      "page_start": 1,
+      "sentence_ids": [
+        "10d9d87669080a59"
+      ],
+      "text": "One big text blob; not a PDF."
+    }
+  ],
+  "doc": {
+    "doc_id": "doc-txt",
+    "num_pages": 1,
+    "pages": [
+      "One big text blob; not a PDF."
+    ],
+    "source_path": "sample.txt"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "5ea6863f75567c58bfa383d339ba35626595df97",
+    "n_chunks": 1,
+    "n_sentences": 1,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 29,
+      "char_start": 0,
+      "doc_id": "doc-txt",
+      "page": 1,
+      "sent_id": "10d9d87669080a59",
+      "text": "One big text blob; not a PDF."
+    }
+  ]
+}

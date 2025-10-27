@@ -1,0 +1,10 @@
+{
+  "adapter": "lc-llama-cpp",
+  "dim": 64,
+  "model_name": "lc-llama.cpp:C:\\Users\\kenai\\OneDrive\\Documents\\Projects\\models\\nomic-embed-text-v1.5.f16.gguf",
+  "model_path": "C:\\Users\\kenai\\OneDrive\\Documents\\Projects\\models\\nomic-embed-text-v1.5.f16.gguf",
+  "smoke_test": {
+    "error": "unexpected: llama_decode returned -1",
+    "ok": false
+  }
+}

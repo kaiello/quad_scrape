@@ -1,0 +1,62 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "4bfc5cd02ec1bc10",
+      "doc_id": "doc-abc",
+      "page_end": 2,
+      "page_start": 1,
+      "sentence_ids": [
+        "918e95be3b248583",
+        "bb388652a676f795",
+        "a1ebd2a5e84714c7"
+      ],
+      "text": "Alpha bravo. Charlie delta. Echo foxtrot golf."
+    }
+  ],
+  "doc": {
+    "doc_id": "doc-abc",
+    "num_pages": 2,
+    "pages": [
+      "Alpha bravo.\nCharlie delta.",
+      "Echo foxtrot golf."
+    ],
+    "source_path": "sample.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "ecb81af1fb1a6117c46216ac54fda7afc68155c9",
+    "n_chunks": 1,
+    "n_sentences": 3,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 12,
+      "char_start": 0,
+      "doc_id": "doc-abc",
+      "page": 1,
+      "sent_id": "918e95be3b248583",
+      "text": "Alpha bravo."
+    },
+    {
+      "char_end": 27,
+      "char_start": 13,
+      "doc_id": "doc-abc",
+      "page": 1,
+      "sent_id": "bb388652a676f795",
+      "text": "Charlie delta."
+    },
+    {
+      "char_end": 18,
+      "char_start": 0,
+      "doc_id": "doc-abc",
+      "page": 2,
+      "sent_id": "a1ebd2a5e84714c7",
+      "text": "Echo foxtrot golf."
+    }
+  ]
+}

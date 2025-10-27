@@ -1,0 +1,9 @@
+{
+  "doc_id": "doc-uni",
+  "source_path": "unicode.pdf",
+  "pages": [
+    "Emoji 😀 and accents café naïve.\r\nNew line after CRLF. Tabs\tand NBSP\u00A0here.",
+    "Combining: A\u0301 e\u0301 i\u0301 o\u0301 u\u0301."
+  ],
+  "images": []
+}

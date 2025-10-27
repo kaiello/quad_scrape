@@ -1,0 +1,4 @@
+[
+  {"doc_id":"d1","source_path":"a.pdf","pages":["A page one. A page two?"],"images":[]},
+  {"doc_id":"d2","source_path":"b.pdf","pages":["B page one!"] ,"images":[]}
+]

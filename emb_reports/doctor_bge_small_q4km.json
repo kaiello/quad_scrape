@@ -1,0 +1,10 @@
+{
+  "adapter": "llama-cpp",
+  "dim": 64,
+  "model_name": "llama.cpp:C:\\Users\\kenai\\OneDrive\\Documents\\Projects\\models\\bge-small-en-v1.5-q4_k_m.gguf",
+  "model_path": "C:\\Users\\kenai\\OneDrive\\Documents\\Projects\\models\\bge-small-en-v1.5-q4_k_m.gguf",
+  "smoke_test": {
+    "error": "unexpected: llama_decode returned -1",
+    "ok": false
+  }
+}

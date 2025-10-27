@@ -1,0 +1,43 @@
+{
+  "chunks": [
+    {
+      "chunk_id": "6f9662c18573d2e7",
+      "doc_id": "d2",
+      "page_end": 1,
+      "page_start": 1,
+      "sentence_ids": [
+        "2381e2fe0afef283"
+      ],
+      "text": "B page one!"
+    }
+  ],
+  "doc": {
+    "doc_id": "d2",
+    "num_pages": 1,
+    "pages": [
+      "B page one!"
+    ],
+    "source_path": "b.pdf"
+  },
+  "images": [],
+  "meta": {
+    "doc_sha1": "1886b359f751b3a045770293ec6080606a8949ee",
+    "n_chunks": 1,
+    "n_sentences": 1,
+    "normalizer": {
+      "name": "combo.segment",
+      "spec": "v1",
+      "version": "0.1.0"
+    }
+  },
+  "sentences": [
+    {
+      "char_end": 11,
+      "char_start": 0,
+      "doc_id": "d2",
+      "page": 1,
+      "sent_id": "2381e2fe0afef283",
+      "text": "B page one!"
+    }
+  ]
+}

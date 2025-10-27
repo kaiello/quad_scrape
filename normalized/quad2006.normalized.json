@@ -1,0 +1,246 @@
+{
+  "doc": {
+    "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+    "source_path": "data/quad2006.pdf",
+    "num_pages": 1
+  },
+  "sentences": [
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "9926d9b8bc2dd8f2",
+      "page": 1,
+      "text": "(DARPA) TRIPS: Single Chip Teraflop Computing PrA",
+      "char_start": 0,
+      "char_end": 49
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "1b7a40bc75c1b64d",
+      "page": 1,
+      "text": "TRIPS Prototype System Implementation\nTRIPS Chip Floorplan — TRIPS atid",
+      "char_start": 51,
+      "char_end": 122
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "27269cdabf6d1f28",
+      "page": 1,
+      "text": "New TRIPS Technologies",
+      "char_start": 124,
+      "char_end": 146
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "b565c6bb5488573f",
+      "page": 1,
+      "text": "EDGE Processor Cores: Technology-scalable, adaptive\nhigh performance for signal processing and commercial apps.",
+      "char_start": 148,
+      "char_end": 259
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "dafac98873334bba",
+      "page": 1,
+      "text": "Non Uniform Cache Architectures: Automatically adapts",
+      "char_start": 260,
+      "char_end": 313
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "45d4bf356c3dac96",
+      "page": 1,
+      "text": "to working set of applications, delivering stable performance.",
+      "char_start": 315,
+      "char_end": 377
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "cac0dd9bee075071",
+      "page": 1,
+      "text": "Static-Placement Dynamic Execution Compilation:\nTechniques for program optimization for scalable architectures.",
+      "char_start": 379,
+      "char_end": 490
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "7fa833d1c47f8e52",
+      "page": 1,
+      "text": "IBM CU-11 process (120nm)\n18x18 mm chip area 4 daughtercards wi 1 TRIPS chip and 2GB DRAM\nS33MHz target clack rate On-board FPGA for expansion",
+      "char_start": 492,
+      "char_end": 634
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "8be0461a9c527f86",
+      "page": 1,
+      "text": "Application Adaptivity: Library and compiler support",
+      "char_start": 636,
+      "char_end": 688
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "c4d7a63b74c2f2b0",
+      "page": 1,
+      "text": "2 16-wide EDGE processors 3 : F :\nfor applications to run on multiple platforms and environments.",
+      "char_start": 690,
+      "char_end": 787
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "cf63663b5d202ad4",
+      "page": 1,
+      "text": "16 GFlops/ops peak\nIMB on-chip memory",
+      "char_start": 789,
+      "char_end": 826
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "355aa308a2866d73",
+      "page": 1,
+      "text": "PowerPC 440GP as controller\nChip-to-chip connectors for multiboard system",
+      "char_start": 828,
+      "char_end": 901
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "d66f2e83d9a227eb",
+      "page": 1,
+      "text": "mir a Timeline\nImpact: High Performance and Adaptivity iepe Brags 4 erp\nScalable Commercial Performance: 500 GIPS/chip ina 03, 04 \"05 06 07\n35 nanometer design, 4 GIPS/chip (sustained) in a 130nm a\nprototype.",
+      "char_start": 903,
+      "char_end": 1111
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "b8b2775a86c51575",
+      "page": 1,
+      "text": "Tiled architecture improves design productivity.",
+      "char_start": 1112,
+      "char_end": 1160
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "10c33889650683c8",
+      "page": 1,
+      "text": "TREES Cie tee\nTRIPS chip/board fab",
+      "char_start": 1161,
+      "char_end": 1195
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "aeb2663156b2f0ee",
+      "page": 1,
+      "text": "High performance signal processing: 5 Teraflops (peak)",
+      "char_start": 1197,
+      "char_end": 1251
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "2d2740bb18d8ec4c",
+      "page": 1,
+      "text": "per chip in a 35 nanometer implementation, 16 GFLOPS in Hyperblock compiler\na 130nm prototype.",
+      "char_start": 1253,
+      "char_end": 1347
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "1885cf81f3fe15f5",
+      "page": 1,
+      "text": "Parallel programming",
+      "char_start": 1348,
+      "char_end": 1368
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "bf501327c03382e7",
+      "page": 1,
+      "text": "libraries\nLarge economies of scale: Merge the desktop, HPC, DSP, System Evaluation",
+      "char_start": 1370,
+      "char_end": 1452
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "eea1134f02ab30c5",
+      "page": 1,
+      "text": "and embedded markets into a single family of TRIPS\nimplementations by 2012.",
+      "char_start": 1454,
+      "char_end": 1529
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "480b2d7a651748da",
+      "page": 1,
+      "text": "Defense Acceleration Kit",
+      "char_start": 1531,
+      "char_end": 1555
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "715de8e4c4de1234",
+      "page": 1,
+      "text": "The University of Texas at Austin/USC-ISI: PIs S.",
+      "char_start": 1557,
+      "char_end": 1606
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "ccbd98d0c4f3688a",
+      "page": 1,
+      "text": "Keckler, D.",
+      "char_start": 1607,
+      "char_end": 1618
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "5f86d19d0311df76",
+      "page": 1,
+      "text": "Burger, and K.",
+      "char_start": 1619,
+      "char_end": 1633
+    },
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "sent_id": "49f70a78a9de4ff4",
+      "page": 1,
+      "text": "McKinley",
+      "char_start": 1634,
+      "char_end": 1642
+    }
+  ],
+  "chunks": [
+    {
+      "doc_id": "4710b318-fea2-4773-935a-76bc3fa87e30",
+      "chunk_id": "e0a917397273a846",
+      "text": "(DARPA) TRIPS: Single Chip Teraflop Computing PrA TRIPS Prototype System Implementation\nTRIPS Chip Floorplan — TRIPS atid New TRIPS Technologies EDGE Processor Cores: Technology-scalable, adaptive\nhigh performance for signal processing and commercial apps. Non Uniform Cache Architectures: Automatically adapts to working set of applications, delivering stable performance. Static-Placement Dynamic Execution Compilation:\nTechniques for program optimization for scalable architectures. IBM CU-11 process (120nm)\n18x18 mm chip area 4 daughtercards wi 1 TRIPS chip and 2GB DRAM\nS33MHz target clack rate On-board FPGA for expansion Application Adaptivity: Library and compiler support 2 16-wide EDGE processors 3 : F :\nfor applications to run on multiple platforms and environments. 16 GFlops/ops peak\nIMB on-chip memory PowerPC 440GP as controller\nChip-to-chip connectors for multiboard system mir a Timeline\nImpact: High Performance and Adaptivity iepe Brags 4 erp\nScalable Commercial Performance: 500 GIPS/chip ina 03, 04 \"05 06 07\n35 nanometer design, 4 GIPS/chip (sustained) in a 130nm a\nprototype. Tiled architecture improves design productivity. TREES Cie tee\nTRIPS chip/board fab High performance signal processing: 5 Teraflops (peak) per chip in a 35 nanometer implementation, 16 GFLOPS in Hyperblock compiler\na 130nm prototype. Parallel programming libraries\nLarge economies of scale: Merge the desktop, HPC, DSP, System Evaluation and embedded markets into a single family of TRIPS\nimplementations by 2012. Defense Acceleration Kit The University of Texas at Austin/USC-ISI: PIs S. Keckler, D. Burger, and K. McKinley",
+      "sentence_ids": [
+        "9926d9b8bc2dd8f2",
+        "1b7a40bc75c1b64d",
+        "27269cdabf6d1f28",
+        "b565c6bb5488573f",
+        "dafac98873334bba",
+        "45d4bf356c3dac96",
+        "cac0dd9bee075071",
+        "7fa833d1c47f8e52",
+        "8be0461a9c527f86",
+        "c4d7a63b74c2f2b0",
+        "cf63663b5d202ad4",
+        "355aa308a2866d73",
+        "d66f2e83d9a227eb",
+        "b8b2775a86c51575",
+        "10c33889650683c8",
+        "aeb2663156b2f0ee",
+        "2d2740bb18d8ec4c",
+        "1885cf81f3fe15f5",
+        "bf501327c03382e7",
+        "eea1134f02ab30c5",
+        "480b2d7a651748da",
+        "715de8e4c4de1234",
+        "ccbd98d0c4f3688a",
+        "5f86d19d0311df76",
+        "49f70a78a9de4ff4"
+      ],
+      "page_start": 1,
+      "page_end": 1
+    }
+  ],
+  "images": []
+}

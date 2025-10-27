@@ -1,0 +1,8 @@
+{
+  "doc_id": "doc-txt",
+  "source_path": "sample.txt",
+  "pages": [
+    "One big text blob; not a PDF."
+  ],
+  "images": []
+}

@@ -1,0 +1,3 @@
+{"mention_id":"d1#e1","type":"ORGANIZATION","label":"IBM","aliases":["I.B.M.","International Business Machines"],"doc_id":"d1","spans":[[1,3]]}
+{"mention_id":"d1#e2","type":"ORGANIZATION","label":"International Business Machines","aliases":["IBM"],"doc_id":"d1","spans":[[5,9]]}
+

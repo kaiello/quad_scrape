@@ -1,0 +1,2 @@
+# Coreference resolution package
+
