@@ -2,11 +2,29 @@
 
 Universal text extractor and structured ingestion pipeline for Knowledge-Graph construction.
 
-> Purpose: Convert raw files → normalized JSON → chunked JSONL → vector embeddings → entity linking → graph-ready data.
+## Purpose
+
+The purpose of this project is to provide a comprehensive and extensible pipeline for converting raw, unstructured data from various file formats into a structured format suitable for knowledge graph construction. It handles text extraction, normalization, embedding, and entity linking, creating a foundation for downstream analysis and querying.
+
+> **Pipeline Stages:** Convert raw files → normalized JSON → chunked JSONL → vector embeddings → entity linking → graph-ready data.
 
 ---
 
-## 🔧 Features
+## 🔧 Core Modules
+
+| Module | Purpose |
+|---|---|
+| `combo.coref` | Handles within-document coreference resolution to link mentions of the same entity. |
+| `combo.docprops` | Aggregates document properties into the "Who, What, When, Where, How" (4W-H) framework. |
+| `combo.embed` | Manages the conversion of text chunks into vector embeddings using various models. |
+| `combo.er` | Performs entity and relation extraction from text. |
+| `combo.io` | Defines the data contracts and I/O operations for the pipeline. |
+| `combo.link` | Links entities across documents to a canonical registry. |
+| `combo.normalize` | Normalizes and segments extracted text into sentences and chunks. |
+
+---
+
+## ⚙️ Features
 
 | Stage | Purpose |
 |--------|----------|

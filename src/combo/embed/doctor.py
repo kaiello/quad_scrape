@@ -11,6 +11,17 @@ from .utils import select_gguf, _resolve
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    """The main entry point for the command-line interface.
+
+    This function parses command-line arguments and runs a health check on the
+    embedding adapters.
+
+    Args:
+        argv: A list of command-line arguments.
+
+    Returns:
+        An exit code.
+    """
     p = argparse.ArgumentParser(prog='combo doctor', description='Health check for embedding adapters')
     p.add_argument('--adapter', choices=['local', 'llama-cpp', 'lc-llama-cpp'], default='local')
     p.add_argument('--llama-model-path', default=None, help='Path to GGUF model')

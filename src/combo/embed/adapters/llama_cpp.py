@@ -6,6 +6,16 @@ from ..api import EmbeddingModel
 
 
 class LlamaCppAdapter(EmbeddingModel):
+    """An embedding model adapter for `llama-cpp-python`.
+
+    This class provides an interface to `llama-cpp-python` for generating
+    embeddings.
+
+    Attributes:
+        name: The name of the model.
+        dim: The dimension of the embeddings.
+        max_tokens: The maximum number of tokens the model can handle.
+    """
     def __init__(
         self,
         model_path: str,
@@ -15,6 +25,17 @@ class LlamaCppAdapter(EmbeddingModel):
         seed: int = 0,
         max_tokens: Optional[int] = None,
     ):
+        """Initializes the LlamaCppAdapter.
+
+        Args:
+            model_path: The path to the GGUF model file.
+            dim: The dimension of the embeddings. If None, it will be inferred
+                from the model.
+            n_ctx: The context size.
+            n_threads: The number of threads to use.
+            seed: The random seed.
+            max_tokens: The maximum number of tokens the model can handle.
+        """
         try:
             from llama_cpp import Llama  # type: ignore
         except Exception as e:  # pragma: no cover - optional dep
@@ -42,6 +63,15 @@ class LlamaCppAdapter(EmbeddingModel):
         return len(emb)
 
     def embed_texts(self, texts: List[str], timeout_s: float) -> List[List[float]]:
+        """Embeds a list of texts.
+
+        Args:
+            texts: A list of texts to embed.
+            timeout_s: The timeout in seconds (unused).
+
+        Returns:
+            A list of embeddings.
+        """
         # Use positional arg for compatibility across versions
         try:
             out = self._llm.create_embedding(texts, pooling_type=2)
@@ -54,5 +84,13 @@ class LlamaCppAdapter(EmbeddingModel):
         return vecs
 
     def token_count(self, text: str) -> Optional[int]:
+        """Counts the number of tokens in a text.
+
+        Args:
+            text: The text to count tokens for.
+
+        Returns:
+            The number of tokens.
+        """
         toks = self._llm.tokenize(text.encode("utf-8"), add_bos=False)
         return len(toks)
