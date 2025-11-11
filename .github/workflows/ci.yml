@@ -49,4 +49,3 @@ jobs:
             linked_ci/linked.entities.jsonl
             linked_ci/_reports/run_report.json
           if-no-files-found: ignore
-
