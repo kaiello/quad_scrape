@@ -74,6 +74,14 @@ NormalizedSchema: Dict[str, Any] = {
 
 
 def _validate_schema(obj: Dict[str, Any]) -> List[str]:
+    """Validates the basic schema of a normalized object.
+
+    Args:
+        obj: The object to validate.
+
+    Returns:
+        A list of error messages.
+    """
     errs: List[str] = []
     # Minimal inline checks (no external jsonschema dependency)
     for k in ["meta", "doc", "sentences", "chunks", "images"]:
@@ -95,10 +103,30 @@ def _validate_schema(obj: Dict[str, Any]) -> List[str]:
 
 
 def _tokens(s: str) -> int:
+    """Counts the number of tokens in a string.
+
+    Args:
+        s: The string to count tokens for.
+
+    Returns:
+        The number of tokens.
+    """
     return len((s or "").split())
 
 
 def validate_normalized_object(obj: Dict[str, Any], token_budget: int = 512) -> List[str]:
+    """Validates a normalized object.
+
+    This function checks the schema, token budget, sentence continuity, page
+    ranges, and slice equality.
+
+    Args:
+        obj: The object to validate.
+        token_budget: The maximum number of tokens per chunk.
+
+    Returns:
+        A list of error messages.
+    """
     errs = _validate_schema(obj)
     if errs:
         return errs
@@ -151,6 +179,15 @@ def validate_normalized_object(obj: Dict[str, Any], token_budget: int = 512) -> 
 
 
 def validate_dir(normalized_dir: str, token_budget: int = 512) -> Dict[str, List[str]]:
+    """Validates all normalized JSON files in a directory.
+
+    Args:
+        normalized_dir: The directory to validate.
+        token_budget: The maximum number of tokens per chunk.
+
+    Returns:
+        A dictionary mapping filenames to a list of error messages.
+    """
     results: Dict[str, List[str]] = {}
     for name in os.listdir(normalized_dir):
         if not name.lower().endswith(".json"):
@@ -167,6 +204,17 @@ def validate_dir(normalized_dir: str, token_budget: int = 512) -> Dict[str, List
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    """The main entry point for the command-line interface.
+
+    This function parses command-line arguments and calls `validate_dir` or
+    `validate_normalized_object` to validate the files.
+
+    Args:
+        argv: A list of command-line arguments.
+
+    Returns:
+        An exit code.
+    """
     ap = argparse.ArgumentParser(prog="combo validate", description="Validate normalized JSON files (dir or file)")
     ap.add_argument("target", help="Directory of normalized .json files or a single file")
     ap.add_argument("--token-budget", type=int, default=512)
