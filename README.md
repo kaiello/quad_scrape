@@ -2,11 +2,29 @@
 
 Universal text extractor and structured ingestion pipeline for Knowledge-Graph construction.
 
-> Purpose: Convert raw files → normalized JSON → chunked JSONL → vector embeddings → entity linking → graph-ready data.
+## Purpose
+
+The purpose of this project is to provide a comprehensive and extensible pipeline for converting raw, unstructured data from various file formats into a structured format suitable for knowledge graph construction. It handles text extraction, normalization, embedding, and entity linking, creating a foundation for downstream analysis and querying.
+
+> **Pipeline Stages:** Convert raw files → normalized JSON → chunked JSONL → vector embeddings → entity linking → graph-ready data.
 
 ---
 
-## 🔧 Features
+## 🔧 Core Modules
+
+| Module | Purpose |
+|---|---|
+| `combo.coref` | Handles within-document coreference resolution to link mentions of the same entity. |
+| `combo.docprops` | Aggregates document properties into the "Who, What, When, Where, How" (4W-H) framework. |
+| `combo.embed` | Manages the conversion of text chunks into vector embeddings using various models. |
+| `combo.er` | Performs entity and relation extraction from text. |
+| `combo.io` | Defines the data contracts and I/O operations for the pipeline. |
+| `combo.link` | Links entities across documents to a canonical registry. |
+| `combo.normalize` | Normalizes and segments extracted text into sentences and chunks. |
+
+---
+
+## ⚙️ Features
 
 | Stage | Purpose |
 |--------|----------|
@@ -51,6 +69,95 @@ py -m poetry run python -m combo validate "tmp_norm"
 ```
 
 ✅ Produces `tmp_norm/*.normalized.json` and validation summary (`failures: 0`).
+
+---
+
+## 📖 How to Use the Program
+
+This section provides detailed instructions on how to run each stage of the `quad-scrape` pipeline, including the expected inputs, outputs, and how to verify the results.
+
+### Stage 1: Normalize & Validate (Step A)
+
+This stage takes raw extracted JSON files, segments them into sentences and chunks, and saves them as normalized JSON files.
+
+*   **Inputs:**
+    *   A directory containing JSON files with extracted text. Each JSON file can contain a single document or a list of documents. The text can be in a `pages` array (for multi-page documents) or a single `text` field.
+    *   Example Input Location: `tests/fixtures/coref/`
+
+*   **Command:**
+    ```powershell
+    py -m poetry run python -m combo normalize <input_directory> --out <output_directory>
+    py -m poetry run python -m combo validate <output_directory>
+    ```
+    *   `<input_directory>`: The path to the directory containing your input JSON files.
+    *   `<output_directory>`: The path where the normalized JSON files will be saved.
+
+*   **Outputs:**
+    *   Normalized JSON files, with one file per input document. The output filename is derived from the input filename (e.g., `input.json` -> `input.normalized.json`).
+    *   Output Location: The `<output_directory>` you specify. For the example workflow, this is `tmp_norm/`.
+
+*   **How to View and Verify:**
+    *   **View:** The output files are standard JSON. You can open them in any text editor. You will see a structured format containing `meta`, `doc`, `sentences`, `chunks`, and `images` keys.
+    *   **Verify:** Run the `combo validate` command on the output directory. A successful run will print a summary with `failures: 0`. This confirms that the output files adhere to the expected schema and internal consistency checks (e.g., sentence slicing).
+
+### Stage 2: Chunk & Embed (Step B)
+
+This stage prepares the normalized data for embedding and then generates vector embeddings for each chunk.
+
+*   **Inputs:**
+    *   A directory of normalized JSON files from the previous stage.
+    *   Input Location: `tmp_norm/` (using the output from Step A).
+
+*   **Commands:**
+    1.  **Chunking:**
+        ```powershell
+        py .\make_chunks_deep.py
+        ```
+        This helper script reads from `tmp_norm/` and creates chunked JSONL files.
+    2.  **Embedding:**
+        ```powershell
+        py -m poetry run python -m combo embed <chunk_directory> --out <embedding_output_directory> --force-local
+        ```
+        *   `<chunk_directory>`: The directory containing the chunked JSONL files (e.g., `tmp_chunks/`).
+        *   `<embedding_output_directory>`: The directory where the embedded JSONL files will be saved.
+
+*   **Outputs:**
+    *   **Chunks:** JSONL files (`.jsonl`) where each line is a chunk.
+        *   Output Location: `tmp_chunks/`
+    *   **Embeddings:** JSONL files (`.embedded.jsonl`) where each line contains a chunk's metadata and its corresponding vector embedding. A `_reports/run_report.json` file is also created.
+        *   Output Location: The `<embedding_output_directory>` you specify (e.g., `tmp_emb_local/`).
+
+*   **How to View and Verify:**
+    *   **View:** The chunk and embedding files are JSONL, so you can view them line by line in a text editor.
+    *   **Verify:** Check the `_reports/run_report.json` file inside the embedding output directory. A successful run will show `"errors": 0` and `"written" > 0`.
+
+### Stage 3: Link Entities (Step D)
+
+This stage links entities from your documents to a central, canonical knowledge base (a SQLite database).
+
+*   **Inputs:**
+    *   A directory with entity files (`.entities.jsonl`). For the example, we use the pre-prepared fixtures.
+    *   A SQLite database file to act as the entity registry.
+    *   Input Location: `tests/fixtures/coref/`
+    *   Registry Location: `step_D_tests/data_registry.sqlite`
+
+*   **Command:**
+    ```powershell
+    py -m poetry run python -m combo link <entity_directory> --registry <registry_path> --out <linking_output_directory>
+    ```
+    *   `<entity_directory>`: Directory with `.entities.jsonl` files.
+    *   `<registry_path>`: Path to your SQLite registry file.
+    *   `<linking_output_directory>`: Directory to save the linked entity results.
+
+*   **Outputs:**
+    *   A `linked.entities.jsonl` file containing the linked entities. Each line represents a canonical entity found in the documents, linking it to all its mentions.
+    *   A `_reports/run_report.json` file with summary statistics.
+    *   The SQLite registry file will be updated with any new entities found.
+    *   Output Location: The `<linking_output_directory>` you specify (e.g., `step_D_tests/linked_runA/`).
+
+*   **How to View and Verify:**
+    *   **View:** The output is a JSONL file. You can also inspect the SQLite database using a tool like DB Browser for SQLite to see the `entities` and `aliases` tables.
+    *   **Verify:** Check the `_reports/run_report.json` in the output directory. A successful run will have `"docs" > 0` and `"entities" > 0`.
 
 ---
 
