@@ -59,66 +59,264 @@ py -m poetry install --no-root
 
 ---
 
-## 🚀 Local Workflow (Steps A → D)
+### 🧩 Step A: Normalization
 
-### Step A — Normalize & Validate
+**Purpose**
 
-```powershell
-py -m poetry run python -m combo normalize "tests/fixtures/coref" --out "tmp_norm"
-py -m poetry run python -m combo validate "tmp_norm"
+This first step transforms raw, extracted document JSON into a stable and structured format. It creates the canonical text units (sentences and chunks) that all downstream steps (embeddings, entity extraction, etc.) will rely on.
+
+This process guarantees deterministic, verifiable IDs for every piece of text and ensures that all downstream annotations can be traced back to the original document text with perfect accuracy.
+
+**Commands**
+
+This step includes two main commands: one to run the normalization and one to validate the results.
+
+```bash
+# 1. Run normalization
+# Reads from 'inputs/', writes to 'normalized/'
+py -m combo normalize inputs/ --out normalized/
 ```
 
-✅ Produces `tmp_norm/*.normalized.json` and validation summary (`failures: 0`).
+> # 2\. Validate the output (Recommended in CI)
+>
+> # Checks for schema and text-slice correctness
+>
+> py -m combo validate normalized/
+>
+> ```
+>
+> **Directory Structure**
+
+> ```
+>
+> \<project\_root\>/
+> ├── inputs/                  \# \<-- INPUT (Raw extracted JSON)
+> │   ├── doc\_A.json
+> │   └── doc\_B.json
+> │
+> └── normalized/              \# \<-- OUTPUT (Feeds Step B)
+> ├── doc\_A.normalized.json
+> ├── doc\_B.normalized.json
+> └── \_reports/            \# (Optional reports)
+>
+> ````
+>
+> **Arguments & Flags**
+
+> *normalize*
+
+> | Argument | Description | Example |
+> | :--- | :--- | :--- |
+> | `dir_or_file` (positional) | Required. Input directory or single file containing extracted JSON. | `inputs/` |
+> | `--out` | Required. The output directory for normalized files. | `normalized/` |
+> | `--quiet` | (Optional) Suppress verbose logging. | |
+
+> *validate*
+
+> | Argument | Description | Example |
+> | :--- | :--- | :--- |
+> | `dir_or_file` (positional) | Required. Path to the \*.normalized.json files to validate. | `normalized/` |
+> | `--fail-fast` | (Optional) Exit on the first validation failure. | |
+
+> **✅ Success Criteria**
+
+> You can confirm this step ran successfully by checking the following:
+
+>   * The `normalize` command completes with an exit code 0.
+>   * The output directory (e.g., `normalized/`) is created and contains one `<base>.normalized.json` file for each input document.
+>   * The `validate` command (`py -m combo validate normalized/`) also completes with an exit code 0.
+>   * Each output file contains the top-level `meta`, `doc`, `sentences`, and `chunks` keys.
+>   * The `meta.doc_sha1` (checksum) and `meta.n_sentences`/`n_chunks` counts are present.
+
+> **🔍 Troubleshooting / Triage**
+
+> | Symptom | Likely Cause | Remedy |
+> | :--- | :--- | :--- |
+> | `normalize` exits with code 2 | Invalid usage. Most commonly, the `--out` path is inside the input path. | Check your paths. Ensure the `--out` directory is fully separate from the input directory. |
+> | `validate` exits with code 2 | Validation Failure. The output file is corrupt or invalid. This could be a schema error or, more critically, a "slice-equality" failure (i.e., `sentence.text` does not match the original page text at the stored offsets). | This indicates a bug in the `normalize` step or a corrupt input file. Run `validate` with `--fail-fast` to identify the specific file and error. |
+> | `KeyError` on `doc_id` or `pages` | Input JSON is missing required fields. | Ensure your upstream extraction process provides `doc_id` (string) and `pages` (list of strings) for every document. |
 
 ---
 
-### Step B — Chunk & Embed
+### 🧠 Step B Overview — Embeddings → Ready for Entity/Relationship (ER)
 
-1. Chunk normalized data:
+**Purpose**
 
-   ```powershell
-   py .\make_chunks_deep.py
-   ```
+Step B converts normalized text chunks from Step A into semantic vector embeddings and accompanying metadata.
 
-   → creates `tmp_chunks/*.jsonl`
-2. Embed using local deterministic adapter:
+This step enables semantic search, clustering, and hybrid retrieval in later phases (Steps C–E), including Knowledge-Graph population and RFI generation.
 
-   ```powershell
-   py -m poetry run python -m combo embed "tmp_chunks" `
-     --out "tmp_emb_local" `
-     --force-local --dim 64 --batch 64 --timeout 30
-   ```
+The step ensures all embeddings are:
 
-   → check `_reports/run_report.json` → `"errors": 0`, `"written" > 0`.
+>   * **Deterministic** (same text + model → same vector)
+>   * **Resumable** (safe to rerun or parallelize)
+>   * **Traceable** (every vector linked back to document + chunk + page span)
+>   * **Compatible** with both vector stores and graph ingestion
+
+**⚙️ Process Flow**
+
+> | Phase | Description | Key Operations |
+> | :--- | :--- | :--- |
+> | 1. Input ingestion | Reads `.normalized.json` files from Step A | Each contains structured chunks with `chunk_id`, `doc_id`, `text`, and `pagination` fields. |
+> | 2. Embedding generation | Embeds each chunk using a configured model | - Default: `LocalDeterministicAdapter` (64-dim).<br>- Optional: `llama.cpp` model (e.g., `bge-small-en-v1.5-q4_k_m.gguf`) via LangChain / `llama-cpp` binding.<br>- Auto-fallback to local adapter on init failure.<br>- Optional `--force-local` flag to bypass `llama.cpp`. |
+> | 3. Token parity guard | Counts tokens by whitespace vs model tokenizer; safely truncates over-length chunks; flags `"truncated": true`. | |
+> | 4. Output serialization | Writes embeddings to newline-delimited JSONL files (`*.embedded.jsonl`) | Each record includes `chunk_id`, `doc_id`, `embedding`, `model`, `dim`, `text_sha1`, and optional `page_span`. |
+> | 5. Manifest creation | Builds `manifest.json` summarizing the run | Records model, version, row count, doc IDs, created timestamp. |
+> | 6. Run reporting | Generates run report JSON under `_reports/` | Contains totals, avg latency, retries, truncations, and error summary. |
+> | 7. Optional indexing | Builds lightweight `.npz` or FAISS index | Quick cosine-similarity search for local ANN validation. |
+
+**Inputs**
+
+> | Source | Format | Purpose |
+> | :--- | :--- | :--- |
+> | Step A outputs | `*.normalized.json` | Text chunks with metadata ready for embedding. |
+> | Embedding model | `.gguf` (optional, via `llama.cpp`) or deterministic adapter | Defines vector dimension and semantic space. |
+> | Config params | CLI flags (`--batch`, `--timeout`, `--max-retries`, etc.) | Control batching, retries, and performance. |
+
+**Outputs**
+
+> | Artifact | Location | Contents / Use |
+> | :--- | :--- | :--- |
+> | `*.embedded.jsonl` | `emb/` (or specified `--out`) | One JSON row per chunk → semantic vectors + metadata. |
+> | `manifest.json` | `emb/` | Model name, row count, creation timestamp, doc IDs. |
+> | `run_report.json` | `emb/_reports/` | Telemetry, errors, warnings, notes (e.g., fallback). |
+> | `embeddings.npz` (optional) | `idx/` | Matrix (vecs) + ID array (ids) for instant similarity tests. |
+
+**🧾 Example CLI Commands**
+
+> Local deterministic embedding (current production path):
+
+> ```bash
+> py -m combo embed tmp_norm --out tmp_emb_local --adapter local --dim 64 --batch 64 --timeout 30
+> py -m combo index tmp_emb_local --out tmp_idx
+> ````
+>
+> Llama.cpp (future retry once binding fixed):
+>
+> ```bash
+> py -m combo doctor --adapter llama-cpp ^
+>  --llama-model-path "C:\Users\kenai\OneDrive\Documents\Projects\models\bge-small-en-v1.5-q4_k_m.gguf" ^
+>  --n-ctx 4096 --n-threads 8 --seed 0 ^
+>  --json-out emb_reports\doctor_bge_small_retry.json
+> ```
+>
+> **✅ Review / Handoff Summary for Agent**
+>
+> | Review Focus | Expected Outcome |
+> | :--- | :--- |
+> | Functionality | Embeddings deterministically written; manifest + report created; fallback works. |
+> | Resilience | `.tmp` resume logic verified; pipeline stays green even if `llama.cpp` fails. |
+> | Traceability | Every vector links back to `doc_id` + `chunk_id` + `text_sha1`. |
+> | Artifacts ready for Step C | `*.embedded.jsonl` + `manifest.json` feed directly into entity/relation extraction. |
+>
+> **Step B in one line**
+>
+> > Transforms normalized text chunks into deterministic, metadata-rich vector embeddings—ready for semantic retrieval, entity/relation extraction, and hybrid graph + LLM reasoning.
 
 ---
 
-### Step D — Link Entities
+### 🔗 Step C: Within-Document Coreference
 
-```powershell
-py -m poetry run python -m combo link "tests/fixtures/coref" `
-  --registry "step_D_tests/data_registry.sqlite" `
-  --out "step_D_tests/linked_runA" `
-  --link-conf 0.75
+This step links pronouns and referring expressions (e.g., *it, they, this system*) to their antecedent entity mentions inside the same document. This ensures all mentions that describe the same thing share a common `resolved_entity_id`.
+
+**Command:**
+
+```bash
+py -m combo coref tmp_er \
+ --out tmp_coref \
+ --max-sent-back 3 \
+ --max-mentions-back 30
 ```
 
-✅ Produces `linked.*.jsonl` and `_reports/run_report.json` (`docs > 0`, `entities > 0`).
+**Arguments & Flags:**
+
+> | Argument | Description | Example |
+> | :--- | :--- | :--- |
+> | `er-dir` (positional) | Required. Input directory from Step B (ER). | `tmp_er` |
+> | `--out` | Required. Output directory for coref results. | `tmp_coref` |
+> | `--max-sent-back` | (Optional) Sentences to look backward. | `3` (default) |
+> | `--max-mentions-back` | (Optional) Mention window size. | `30` (default) |
+
+**✅ How to Verify Success:**
+
+> You can confirm the step ran successfully by checking the following:
+
+>   * The command finishes with an exit code 0.
+>   * The output directory (e.g., `tmp_coref/`) is created.
+>   * The `tmp_coref/` directory contains an `.entities.jsonl` file for every input file.
+>   * Each output `.entities.jsonl` file has the identical line count as its corresponding input file.
+>   * The `tmp_coref/_reports/run_report.json` file exists and shows non-zero values for `mentions` and `pronouns_total`.
 
 ---
 
-### Directory Overview
+### 📝 Step C.5: 5W(H) Aggregation
+
+**Purpose**
+
+This step builds a per-document summary of **Who / What / When / Where / How**. It works by aggregating the entity mentions from the previous steps (ER + Coref) into a single, compact JSON record for each document, which is ideal for quick database ingestion or review.
+
+**Command**
+
+This is the recommended command, which uses the outputs from Step C (Coref) and the optional Normalization step for the best results.
+
+```bash
+py -m combo fourw tmp_er \
+ --coref-dir tmp_coref \
+ --normalized-dir tmp_norm \
+ --out tmp_4w \
+ --things-labels DEVICE,PRODUCT,VEHICLE,WEAPON,SYSTEM,TOOL,SOFTWARE,COMPONENT,MATERIAL \
+ --min-thing-count 1
+```
+
+**Directory Structure**
 
 ```
-quad-scrape/
-├─ tests/fixtures/coref/            # sample input
-├─ tmp_norm/                        # normalized JSON
-├─ tmp_chunks/                      # JSONL chunks
-├─ tmp_emb_local/                   # embeddings
-├─ step_D_tests/linked_runA/        # linked outputs
-├─ make_chunks_deep.py              # helper chunker
-├─ audit_norm.py                    # schema auditor
-└─ README.md
+<project_root>/
+├── tmp_coref/               # <-- INPUT (Recommended)
+│   ├── doc_A.entities.jsonl
+│   └── ...
+├── tmp_norm/                # <-- INPUT (Optional)
+│   └── ...
+│
+└── tmp_4w/                  # <-- OUTPUT
+    ├── doc_A.docprops.jsonl
+    ├── doc_B.docprops.jsonl
+    └── _reports/
+        └── run_report.json
 ```
+
+**Arguments & Flags**
+
+> | Argument | Description | Example |
+> | :--- | :--- | :--- |
+> | `er_dir` (positional) | Fallback input. Path to Step B (ER) outputs. Used if `--coref-dir` is missing. | `tmp_er` |
+> | `--coref-dir` | **Recommended input**. Path to Step C (Coref) outputs. | `tmp_coref` |
+> | `--normalized-dir` | Optional input. Path to normalized doc metadata (for mime, filename, etc.). | `tmp_norm` |
+> | `--out` | Required. The output directory for 5W(H) summaries. | `tmp_4w` |
+> | `--things-labels` | (Config) Comma-separated list of entity labels to include in the "How" bucket. | `DEVICE,PRODUCT,...` |
+> | `--min-thing-count` | (Config) Minimum mentions for a "thing" to be included. | `1` (default) |
+> | `--allow-other-into-how` | (Flag) If set, includes entities with the `OTHER` label in the "How" bucket. | |
+> | `--max-fallback-dates` | (Config) Max dates to find via regex if no `DATE` entities exist. | `5` (default) |
+
+**✅ Success Criteria**
+
+> You can confirm this step ran successfully by checking the following:
+
+>   * The command completes with an exit code 0.
+>   * The output directory (e.g., `tmp_4w/`) is created.
+>   * The directory contains `<base>.docprops.jsonl` files.
+>   * The `tmp_4w/_reports/run_report.json` file is created and shows non-zero `docs` and `totals`.
+>   * If you inspect a `docprops.jsonl` file, you see all five main keys: `who`, `what`, `when`, `where`, and `how`.
+>   * In the report, `used_coref` should be `true` if you provided the `tmp_coref` directory.
+
+**🔍 Troubleshooting / Triage**
+
+> | Symptom | Likely Cause | Remedy |
+> | :--- | :--- | :--- |
+> | "how" bucket is empty or missing items | The `--things-labels` list doesn't match the labels from your ER step. | Check your ER (Step B) output labels and update the `--things-labels` flag to match. |
+> | "who" or "how" has split entities (e.g., "ACME" and "it" are separate) | Coref was not used, or the mentions were missing `resolved_entity_id`. | Ensure you are passing `--coref-dir tmp_coref` and check the `run_report.json` to see `used_coref: true`. |
+> | "when" bucket is empty | No `DATE` or `TIME` entities were found by Step B. | Provide `--normalized-dir tmp_norm` so the step can fall back to regex on the `text_preview`. |
+> | "what" bucket has `doc_type: "unknown"` | The `--normalized-dir` was not provided or had no mime/filename info. | This is okay, but for better "what" info, provide the `tmp_norm` directory. |
 
 ---
 
