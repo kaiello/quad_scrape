@@ -16,9 +16,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install Poetry
-        run: |
-          pipx install poetry==1.8.3
-          poetry --version
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
 
       - name: Install dependencies
         run: |
@@ -32,13 +32,7 @@ jobs:
       - name: Build Step D linked artifacts (optional)
         if: always()
         run: |
-          poetry run python -m combo link tests/fixtures/coref \
-            --registry linked_ci_registry.sqlite \
-            --out linked_ci \
-            --link-conf 0.75 \
-            --adapters wikidata,uei \
-            --wikidata-cache tests/fixtures/wikidata_cache.json \
-            --uei-cache tests/fixtures/uei_cache.json || true
+          poetry run python -m combo link tests/fixtures/coref \n            --registry linked_ci_registry.sqlite \n            --out linked_ci \n            --link-conf 0.75 \n            --adapters wikidata,uei \n            --wikidata-cache tests/fixtures/wikidata_cache.json \n            --uei-cache tests/fixtures/uei_cache.json || true
 
       - name: Upload Step D artifacts (optional)
         if: always()
@@ -49,4 +43,3 @@ jobs:
             linked_ci/linked.entities.jsonl
             linked_ci/_reports/run_report.json
           if-no-files-found: ignore
-
