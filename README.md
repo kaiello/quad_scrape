@@ -109,6 +109,81 @@ You can confirm the step ran successfully by checking the following:
 
 ---
 
+### 🧩 Step C.5: 5W(H) Aggregation
+
+### Purpose
+
+This step builds a per-document summary of **Who / What / When / Where / How**. It works by aggregating the entity mentions from the previous steps (ER + Coref) into a single, compact JSON record for each document, which is ideal for quick database ingestion or review.
+
+### Command
+
+This is the recommended command, which uses the outputs from **Step C (Coref)** and the optional **Normalization** step for the best results.
+
+```bash
+py -m combo fourw tmp_er \
+  --coref-dir tmp_coref \
+  --normalized-dir tmp_norm \
+  --out tmp_4w \
+  --things-labels DEVICE,PRODUCT,VEHICLE,WEAPON,SYSTEM,TOOL,SOFTWARE,COMPONENT,MATERIAL \
+  --min-thing-count 1
+```
+
+### Directory Structure
+
+```
+<project_root>/
+├── tmp_coref/               # <-- INPUT (Recommended)
+│   ├── doc_A.entities.jsonl
+│   └── ...
+├── tmp_norm/                # <-- INPUT (Optional)
+│   └── ...
+│
+└── tmp_4w/                  # <-- OUTPUT
+    ├── doc_A.docprops.jsonl
+    ├── doc_B.docprops.jsonl
+    └── _reports/
+        └── run_report.json
+```
+
+### Arguments & Flags
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `er_dir` (positional) | **Fallback input.** Path to Step B (ER) outputs. Used if `--coref-dir` is missing. | `tmp_er` |
+| `--coref-dir` | **Recommended input.** Path to Step C (Coref) outputs. | `tmp_coref` |
+| `--normalized-dir` | **Optional input.** Path to normalized doc metadata (for mime, filename, etc.). | `tmp_norm` |
+| `--out` | **Required.** The output directory for 5W(H) summaries. | `tmp_4w` |
+| `--things-labels` | (Config) Comma-separated list of entity labels to include in the **"How"** bucket. | `DEVICE,PRODUCT,...` |
+| `--min-thing-count` | (Config) Minimum mentions for a "thing" to be included. | `1` (default) |
+| `--allow-other-into-how`| (Flag) If set, includes entities with the `OTHER` label in the "How" bucket. | |
+| `--max-fallback-dates`| (Config) Max dates to find via regex if no DATE entities exist. | `5` (default) |
+
+-----
+
+### ✅ Success Criteria
+
+You can confirm this step ran successfully by checking the following:
+
+  * The command completes with an **exit code 0**.
+  * The output directory (e.g., `tmp_4w/`) is created.
+  * The directory contains **`<base>.docprops.jsonl`** files.
+  * The `tmp_4w/_reports/run_report.json` file is created and shows non-zero `docs` and `totals`.
+  * If you inspect a `docprops.jsonl` file, you see all five main keys: `who`, `what`, `when`, `where`, and `how`.
+  * In the report, `used_coref` should be `true` if you provided the `tmp_coref` directory.
+
+-----
+
+### 🔍 Troubleshooting / Triage
+
+| Symptom | Likely Cause | Remedy |
+| :--- | :--- | :--- |
+| **"how"** bucket is empty or missing items | The `--things-labels` list doesn't match the labels from your ER step. | Check your ER (Step B) output labels and update the `--things-labels` flag to match. |
+| **"who"** or **"how"** has split entities (e.g., "ACME" and "it" are separate) | Coref was not used, or the mentions were missing `resolved_entity_id`. | Ensure you are passing `--coref-dir tmp_coref` and check the `run_report.json` to see `used_coref: true`. |
+| **"when"** bucket is empty | No `DATE` or `TIME` entities were found by Step B. | Provide `--normalized-dir tmp_norm` so the step can fall back to regex on the `text_preview`. |
+| **"what"** bucket has `doc_type: "unknown"` | The `--normalized-dir` was not provided or had no mime/filename info. | This is okay, but for better "what" info, provide the `tmp_norm` directory. |
+
+-----
+
 ### Step D — Link Entities
 
 ```powershell
