@@ -1,8 +1,9 @@
 [tool.poetry]
-name = "quad_scrape"
+name = "combo"
 version = "0.1.0"
 description = "Scraping project"
 authors = ["kaiello"]
+packages = [{ include = "combo", from = "src" }]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
