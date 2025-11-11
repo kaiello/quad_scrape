@@ -1,9 +1,9 @@
 [tool.poetry]
-name = "combo"
+name = "quad-scrape"
 version = "0.1.0"
-description = "Scraping project"
-authors = ["kaiello"]
-packages = [{ include = "combo", from = "src" }]
+description = "Universal text extraction with OCR (transformers/Tesseract/EasyOCR) for PDF, images, DOCX, PPTX, XLSX, CSV"
+authors = ["Your Name <you@example.com>"]
+package-mode = false
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
@@ -25,6 +25,3 @@ pytest = "^8.0"
 [build-system]
 requires = ["poetry-core>=1.8.0"]
 build-backend = "poetry.core.masonry.api"
-
-[tool.pytest.ini_options]
-pythonpath = ["."]
