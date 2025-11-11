@@ -1,9 +1,8 @@
 [tool.poetry]
-name = "quad-scrape"
+name = "quad_scrape"
 version = "0.1.0"
-description = "Universal text extraction with OCR (transformers/Tesseract/EasyOCR) for PDF, images, DOCX, PPTX, XLSX, CSV"
-authors = ["Your Name <you@example.com>"]
-package-mode = false
+description = "Scraping project"
+authors = ["kaiello"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.13"
