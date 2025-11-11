@@ -43,14 +43,80 @@ py -m poetry install --no-root
 
 ## 🚀 Local Workflow (Steps A → D)
 
-### Step A — Normalize & Validate
+### 🧩 Step A: Normalization
 
-```powershell
-py -m poetry run python -m combo normalize "tests/fixtures/coref" --out "tmp_norm"
-py -m poetry run python -m combo validate "tmp_norm"
+### Purpose
+
+This first step transforms raw, extracted document JSON into a stable and structured format. It creates the canonical text units (**sentences** and **chunks**) that all downstream steps (embeddings, entity extraction, etc.) will rely on.
+
+This process guarantees deterministic, verifiable IDs for every piece of text and ensures that all downstream annotations can be traced back to the original document text with perfect accuracy.
+
+### Commands
+
+This step includes two main commands: one to **run** the normalization and one to **validate** the results.
+
+```bash
+# 1. Run normalization
+# Reads from 'inputs/', writes to 'normalized/'
+py -m combo normalize inputs/ --out normalized/
+
+# 2. Validate the output (Recommended in CI)
+# Checks for schema and text-slice correctness
+py -m combo validate normalized/
 ```
 
-✅ Produces `tmp_norm/*.normalized.json` and validation summary (`failures: 0`).
+### Directory Structure
+
+```
+<project_root>/
+├── inputs/                  # <-- INPUT (Raw extracted JSON)
+│   ├── doc_A.json
+│   └── doc_B.json
+│
+└── normalized/              # <-- OUTPUT (Feeds Step B)
+    ├── doc_A.normalized.json
+    ├── doc_B.normalized.json
+    └── _reports/            # (Optional reports)
+```
+
+### Arguments & Flags
+
+#### `normalize`
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `dir_or_file` (positional) | **Required.** Input directory or single file containing extracted JSON. | `inputs/` |
+| `--out` | **Required.** The output directory for normalized files. | `normalized/` |
+| `--quiet` | (Optional) Suppress verbose logging. | |
+
+#### `validate`
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `dir_or_file` (positional) | **Required.** Path to the `*.normalized.json` files to validate. | `normalized/` |
+| `--fail-fast` | (Optional) Exit on the first validation failure. | |
+
+-----
+
+### ✅ Success Criteria
+
+You can confirm this step ran successfully by checking the following:
+
+  * The `normalize` command completes with an **exit code 0**.
+  * The output directory (e.g., `normalized/`) is created and contains one `<base>.normalized.json` file for each input document.
+  * The **`validate` command** (`py -m combo validate normalized/`) also completes with an **exit code 0**.
+  * Each output file contains the top-level `meta`, `doc`, `sentences`, and `chunks` keys.
+  * The `meta.doc_sha1` (checksum) and `meta.n_sentences`/`n_chunks` counts are present.
+
+-----
+
+### 🔍 Troubleshooting / Triage
+
+| Symptom | Likely Cause | Remedy |
+| :--- | :--- | :--- |
+| `normalize` exits with **code 2** | Invalid usage. Most commonly, the `--out` path is inside the input path. | Check your paths. Ensure the `--out` directory is fully separate from the input directory. |
+| `validate` exits with **code 2** | **Validation Failure.** The output file is corrupt or invalid. This could be a schema error or, more critically, a "slice-equality" failure (i.e., `sentence.text` does not match the original `page` text at the stored offsets). | This indicates a bug in the `normalize` step or a corrupt input file. Run `validate` with `--fail-fast` to identify the specific file and error. |
+| `KeyError` on `doc_id` or `pages` | Input JSON is missing required fields. | Ensure your upstream extraction process provides `doc_id` (string) and `pages` (list of strings) for every document. |
 
 ---
 
