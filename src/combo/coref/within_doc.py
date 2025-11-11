@@ -38,14 +38,6 @@ MALE_NAMES = {
 
 
 def _derive_mention_features(m: Dict) -> Dict:
-    """Fills in mention features like number, gender, and pronoun form.
-
-    Args:
-        m: The mention to process.
-
-    Returns:
-        The mention with added features.
-    """
     t = (m.get("text") or "").strip()
     low = t.lower()
     is_pron = low in PRONOUNS
@@ -69,14 +61,6 @@ def _derive_mention_features(m: Dict) -> Dict:
 
 
 def _estimate_number_for_candidate(c: Dict) -> str:
-    """Estimates the number (singular/plural) of a candidate mention.
-
-    Args:
-        c: The candidate mention to process.
-
-    Returns:
-        The estimated number of the candidate.
-    """
     # Heuristic: ORG -> singular; words ending with 's' (non-ORG) -> plural
     txt = (c.get("text") or "").strip()
     if (c.get("type") or "").upper() == "ORG":
@@ -89,14 +73,6 @@ def _estimate_number_for_candidate(c: Dict) -> str:
 
 
 def _is_device_like(c: Dict) -> bool:
-    """Checks if a candidate mention is device-like.
-
-    Args:
-        c: The candidate mention to process.
-
-    Returns:
-        True if the candidate is device-like, False otherwise.
-    """
     ty = (c.get("type") or "").upper()
     txt = (c.get("text") or "").lower()
     return ty in {"PRODUCT", "DEVICE"} or any(w in txt for w in DEVICE_LIKE_WORDS)
@@ -107,22 +83,12 @@ def resolve_coref(
     max_sent_back: int = 3,
     max_mentions_back: int = 30,
 ) -> List[Dict]:
-    """Resolves coreferences in a list of entities.
+    """Return a new list with coref fields populated.
 
-    This function uses deterministic nearest-antecedent heuristics to resolve
-    coreferences. It prioritizes pronoun agreement on number/gender, prefers
-    devices/products over organizations for pronouns like "it," "this," and
-    "that," and handles plural pronouns by preferring plural-like candidates.
-
-    Args:
-        ents: A list of entities to resolve.
-        max_sent_back: The maximum number of sentences to look back for a
-            candidate.
-        max_mentions_back: The maximum number of mentions to look back for a
-            candidate.
-
-    Returns:
-        A new list of entities with coreference fields populated.
+    Uses deterministic nearest-antecedent heuristics:
+    - Pronoun agreement on number/gender where available
+    - Prefer device/product over org for it/this/that
+    - Plural pronouns prefer plural-like candidates
     """
     aug = [_derive_mention_features(e) for e in ents]
     # Keep original order; create an index for lookup

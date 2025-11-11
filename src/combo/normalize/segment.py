@@ -17,29 +17,10 @@ SPEC_VERSION = "v1"
 
 
 def _sha16(s: str) -> str:
-    """Computes the first 16 characters of the SHA1 hash of a string.
-
-    Args:
-        s: The string to hash.
-
-    Returns:
-        The first 16 characters of the SHA1 hash.
-    """
     return hashlib.sha1(s.encode("utf-8")).hexdigest()[:16]
 
 
 def _sentence_spans(text: str) -> List[Tuple[int, int]]:
-    """Segments a text into sentence spans.
-
-    This function provides a simple, robust sentence segmentation that
-    preserves offsets.
-
-    Args:
-        text: The text to segment.
-
-    Returns:
-        A list of (start, end) character offsets for each sentence.
-    """
     # Simple, robust sentence segmentation preserving offsets.
     n = len(text)
     spans: List[Tuple[int, int]] = []
@@ -93,16 +74,6 @@ def _sentence_spans(text: str) -> List[Tuple[int, int]]:
 
 
 def sentences_for_page(doc_id: str, page_index_1based: Optional[int], page_text: str) -> List[Sentence]:
-    """Extracts sentences from a single page of a document.
-
-    Args:
-        doc_id: The ID of the document.
-        page_index_1based: The 1-based index of the page.
-        page_text: The text of the page.
-
-    Returns:
-        A list of sentences.
-    """
     sents: List[Sentence] = []
     for a, b in _sentence_spans(page_text):
         sent_text = page_text[a:b]
@@ -123,16 +94,6 @@ def sentences_for_page(doc_id: str, page_index_1based: Optional[int], page_text:
 
 
 def chunk_sentences(doc_id: str, sentences: List[Sentence], max_tokens: int = 512) -> List[Chunk]:
-    """Chunks a list of sentences into larger text blocks.
-
-    Args:
-        doc_id: The ID of the document.
-        sentences: A list of sentences.
-        max_tokens: The maximum number of tokens per chunk.
-
-    Returns:
-        A list of chunks.
-    """
     chunks: List[Chunk] = []
     cur_ids: List[str] = []
     cur_texts: List[str] = []
@@ -174,14 +135,6 @@ def chunk_sentences(doc_id: str, sentences: List[Sentence], max_tokens: int = 51
 
 
 def to_extracted_doc(item: Dict[str, Any]) -> ExtractedDoc:
-    """Converts a dictionary to an `ExtractedDoc` object.
-
-    Args:
-        item: The dictionary to convert.
-
-    Returns:
-        An `ExtractedDoc` object.
-    """
     source_path = item.get("source_path") or item.get("path") or item.get("file") or ""
     pages: List[str]
     if isinstance(item.get("pages"), list):
@@ -209,14 +162,6 @@ def to_extracted_doc(item: Dict[str, Any]) -> ExtractedDoc:
 
 # Convenience helpers for tests and library use
 def segment_to_sentences(item: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Segments a document into sentences.
-
-    Args:
-        item: The document to segment.
-
-    Returns:
-        A list of sentences, where each sentence is a dictionary.
-    """
     doc = to_extracted_doc(item)
     out: List[Dict[str, Any]] = []
     for idx, page_text in enumerate(doc.pages, start=1):
@@ -227,16 +172,6 @@ def segment_to_sentences(item: Dict[str, Any]) -> List[Dict[str, Any]]:
 
 
 def build_chunks(sentences: List[Dict[str, Any]], doc_id: Optional[str] = None, max_tokens: int = 512) -> List[Dict[str, Any]]:
-    """Builds chunks from a list of sentences.
-
-    Args:
-        sentences: A list of sentences.
-        doc_id: The ID of the document.
-        max_tokens: The maximum number of tokens per chunk.
-
-    Returns:
-        A list of chunks, where each chunk is a dictionary.
-    """
     # Accept dict sentences as produced by segment_to_sentences
     s_objs = [
         Sentence(
@@ -255,17 +190,6 @@ def build_chunks(sentences: List[Dict[str, Any]], doc_id: Optional[str] = None, 
 
 
 def normalize_item(item: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalizes a single document.
-
-    This function segments the document into sentences and chunks, and returns
-    a dictionary containing the normalized data.
-
-    Args:
-        item: The document to normalize.
-
-    Returns:
-        A dictionary containing the normalized data.
-    """
     import hashlib
 
     doc = to_extracted_doc(item)
@@ -299,14 +223,6 @@ def normalize_item(item: Dict[str, Any]) -> Dict[str, Any]:
 
 
 def _iter_items_from_json(path: str) -> Iterable[Dict[str, Any]]:
-    """Iterates over items from a JSON file.
-
-    Args:
-        path: The path to the JSON file.
-
-    Yields:
-        A dictionary for each item in the file.
-    """
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
     if isinstance(data, list):
@@ -317,15 +233,6 @@ def _iter_items_from_json(path: str) -> Iterable[Dict[str, Any]]:
 
 
 def _safe_basename_for_item(item: Dict[str, Any], fallback: str) -> str:
-    """Gets a safe basename for a normalized file.
-
-    Args:
-        item: The item to get the basename for.
-        fallback: The fallback basename.
-
-    Returns:
-        A safe basename.
-    """
     name = (item.get("file") or os.path.basename(item.get("path", "")) or fallback) or "doc"
     base, _ = os.path.splitext(name)
     # Sanitize
@@ -334,15 +241,6 @@ def _safe_basename_for_item(item: Dict[str, Any], fallback: str) -> str:
 
 
 def normalize_dir(in_dir: str, out_dir: str) -> List[str]:
-    """Normalizes all extracted JSON files in a directory.
-
-    Args:
-        in_dir: The input directory.
-        out_dir: The output directory.
-
-    Returns:
-        A list of the paths to the written files.
-    """
     os.makedirs(out_dir, exist_ok=True)
     written: List[str] = []
     for name in os.listdir(in_dir):
@@ -363,29 +261,10 @@ def normalize_dir(in_dir: str, out_dir: str) -> List[str]:
 
 
 def _resolve(path: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        path: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(path))
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `normalize_dir` to
-    normalize the documents.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     p = argparse.ArgumentParser(prog="combo normalize", description="Build sentences and chunks from extracted JSON")
     p.add_argument("extracted_json_dir", help="Directory containing extracted JSON files")
     p.add_argument("--out", required=True, help="Output directory for normalized JSONs")

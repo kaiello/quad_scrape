@@ -8,19 +8,6 @@ from typing import Dict, List, Tuple
 
 @dataclass
 class Entity:
-    """Represents a single entity.
-
-    Attributes:
-        id: The unique ID of the entity.
-        chunk_id: The ID of the chunk the entity is in.
-        doc_id: The ID of the document the entity is in.
-        type: The type of the entity.
-        text: The text of the entity.
-        start: The start character offset of the entity.
-        end: The end character offset of the entity.
-        conf: The confidence score of the entity.
-        source_sha1: The SHA1 hash of the source document.
-    """
     id: str
     chunk_id: str
     doc_id: str
@@ -34,18 +21,6 @@ class Entity:
 
 @dataclass
 class Relation:
-    """Represents a single relation between two entities.
-
-    Attributes:
-        id: The unique ID of the relation.
-        head_ent_id: The ID of the head entity.
-        tail_ent_id: The ID of the tail entity.
-        type: The type of the relation.
-        conf: The confidence score of the relation.
-        chunk_id: The ID of the chunk the relation is in.
-        doc_id: The ID of the document the relation is in.
-        source_sha1: The SHA1 hash of the source document.
-    """
     id: str
     head_ent_id: str
     tail_ent_id: str
@@ -57,32 +32,10 @@ class Relation:
 
 
 def _sha16(s: str) -> str:
-    """Computes the first 16 characters of the SHA1 hash of a string.
-
-    Args:
-        s: The string to hash.
-
-    Returns:
-        The first 16 characters of the SHA1 hash.
-    """
     return hashlib.sha1(s.encode("utf-8")).hexdigest()[:16]
 
 
 def simple_ner(text: str, doc_id: str, chunk_id: str, source_sha1: str) -> List[Entity]:
-    """A simple named entity recognition function.
-
-    This function uses regular expressions to find emails, URLs, all-caps words,
-    and capitalized words.
-
-    Args:
-        text: The text to process.
-        doc_id: The ID of the document.
-        chunk_id: The ID of the chunk.
-        source_sha1: The SHA1 hash of the source document.
-
-    Returns:
-        A list of entities.
-    """
     ents: List[Entity] = []
     # Patterns: emails, urls, ALLCAPS words (ORG-ish), Capitalized words (PERSON-ish)
     email_pat = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
@@ -120,19 +73,6 @@ def simple_ner(text: str, doc_id: str, chunk_id: str, source_sha1: str) -> List[
 
 
 def simple_link(entities: List[Entity], doc_id: str, chunk_id: str, source_sha1: str) -> List[Relation]:
-    """A simple relation extraction function.
-
-    This function links an ORG entity to the nearest URL entity that follows it.
-
-    Args:
-        entities: A list of entities.
-        doc_id: The ID of the document.
-        chunk_id: The ID of the chunk.
-        source_sha1: The SHA1 hash of the source document.
-
-    Returns:
-        A list of relations.
-    """
     rels: List[Relation] = []
     # Toy rule: connect an ORG followed by a URL within the chunk
     urls = [e for e in entities if e.type == "URL"]

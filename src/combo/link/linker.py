@@ -13,26 +13,10 @@ from .external_sources import uei_cache as uei
 
 
 def _resolve(p: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        p: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(p))
 
 
 def _iter_entities_from_dir(base_dir: str) -> Dict[str, List[Dict[str, Any]]]:
-    """Iterates over entities from a directory of JSONL files.
-
-    Args:
-        base_dir: The directory to iterate over.
-
-    Returns:
-        A dictionary mapping document base names to a list of entities.
-    """
     docs: Dict[str, List[Dict[str, Any]]] = {}
     for name in os.listdir(base_dir):
         if not name.endswith('.entities.jsonl'):
@@ -52,15 +36,6 @@ def _iter_entities_from_dir(base_dir: str) -> Dict[str, List[Dict[str, Any]]]:
 
 
 def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
-    """Writes a list of dictionaries to a JSONL file.
-
-    Args:
-        path: The path to the output file.
-        rows: The list of dictionaries to write.
-
-    Returns:
-        The number of rows written.
-    """
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
     with open(path, 'w', encoding='utf-8', newline='') as f:
         for r in rows:
@@ -70,25 +45,6 @@ def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
 
 
 def link_entities(input_dir: str, out_dir: str, registry_path: str, *, link_conf: float = 0.75, enable_fts: bool = False, materialize_blocking: bool = False, adapters: Optional[List[str]] = None, adapter_paths: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
-    """Links entities across documents.
-
-    This function iterates over entities from the input directory, links them
-    to a canonical registry, and writes the linked entities to the output
-    directory.
-
-    Args:
-        input_dir: The directory containing the entity files.
-        out_dir: The directory to write the linked entities to.
-        registry_path: The path to the SQLite registry file.
-        link_conf: The confidence threshold for linking.
-        enable_fts: Whether to enable full-text search in the registry.
-        materialize_blocking: Whether to materialize blocking keys.
-        adapters: A list of external adapters to use.
-        adapter_paths: A dictionary mapping adapter names to cache paths.
-
-    Returns:
-        A dictionary of statistics.
-    """
     input_dir = _resolve(input_dir)
     out_dir = _resolve(out_dir)
     os.makedirs(out_dir, exist_ok=True)
@@ -163,17 +119,6 @@ def link_entities(input_dir: str, out_dir: str, registry_path: str, *, link_conf
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `link_entities` to
-    link entities across documents.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     ap = argparse.ArgumentParser(prog='combo link', description='Cross-doc entity linking with SQLite registry and offline adapters')
     ap.add_argument('input_dir', help='Directory with *.entities.jsonl (coref-augmented preferred)')
     ap.add_argument('--registry', required=True, help='Path to SQLite registry file')

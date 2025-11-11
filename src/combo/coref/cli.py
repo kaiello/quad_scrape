@@ -10,26 +10,10 @@ from .within_doc import resolve_coref, _derive_mention_features
 
 
 def _resolve(p: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        p: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(p))
 
 
 def _read_entities(path: str) -> List[Dict[str, Any]]:
-    """Reads entities from a JSONL file.
-
-    Args:
-        path: The path to the JSONL file.
-
-    Returns:
-        A list of entities.
-    """
     ents: List[Dict[str, Any]] = []
     with open(path, 'r', encoding='utf-8') as f:
         for line in f:
@@ -40,15 +24,6 @@ def _read_entities(path: str) -> List[Dict[str, Any]]:
 
 
 def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
-    """Writes a list of dictionaries to a JSONL file.
-
-    Args:
-        path: The path to the output file.
-        rows: A list of dictionaries to write.
-
-    Returns:
-        The number of rows written.
-    """
     os.makedirs(os.path.dirname(path) or '.', exist_ok=True)
     with open(path, 'w', encoding='utf-8', newline='') as f:
         for r in rows:
@@ -58,18 +33,6 @@ def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
 
 
 def _build_chains(ents: List[Dict[str, Any]]) -> Dict[str, List[str]]:
-    """Builds coreference chains from a list of entities.
-
-    This function uses a union-find data structure to group mentions into
-    coreference chains based on the `antecedent_mention_id` field.
-
-    Args:
-        ents: A list of entities with coreference information.
-
-    Returns:
-        A dictionary mapping the root of each chain to a list of mention IDs
-        in that chain.
-    """
     # Simple chain building via antecedent links
     parent: Dict[str, str] = {}
 
@@ -100,24 +63,6 @@ def _build_chains(ents: List[Dict[str, Any]]) -> Dict[str, List[str]]:
 
 
 def process_er_dir(er_dir: str, out_dir: str, max_sent_back: int, max_mentions_back: int) -> Dict[str, Any]:
-    """Processes a directory of entity files to resolve coreferences.
-
-    This function reads all `.entities.jsonl` files from the input directory,
-    resolves coreferences, and writes the augmented entities and coreference
-    chains to the output directory. It also generates a run report with
-    statistics.
-
-    Args:
-        er_dir: The directory containing the entity files.
-        out_dir: The directory to write the results to.
-        max_sent_back: The maximum number of sentences to look back for a
-            candidate.
-        max_mentions_back: The maximum number of mentions to look back for a
-            candidate.
-
-    Returns:
-        A dictionary containing statistics about the run.
-    """
     er_dir = _resolve(er_dir)
     out_dir = _resolve(out_dir)
     os.makedirs(out_dir, exist_ok=True)
@@ -169,17 +114,6 @@ def process_er_dir(er_dir: str, out_dir: str, max_sent_back: int, max_mentions_b
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `process_er_dir`
-    to perform coreference resolution.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     ap = argparse.ArgumentParser(prog='combo coref', description='Within-document coreference (heuristic)')
     ap.add_argument('er_dir', help='Directory with *.entities.jsonl')
     ap.add_argument('--out', required=True, help='Output directory for coref results')

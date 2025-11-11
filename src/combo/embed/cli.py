@@ -11,40 +11,15 @@ from .utils import select_gguf, _resolve as _resolve_path
 
 
 def _resolve(path: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        path: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(path))
 
 
 def _load_normalized(path: str) -> Dict[str, Any]:
-    """Loads a normalized JSON file.
-
-    Args:
-        path: The path to the file.
-
-    Returns:
-        The loaded JSON data.
-    """
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
 
 def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
-    """Writes a list of dictionaries to a JSONL file.
-
-    Args:
-        path: The path to the output file.
-        rows: The list of dictionaries to write.
-
-    Returns:
-        The number of rows written.
-    """
     os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
     with open(path, "w", encoding="utf-8", newline="") as f:
         for r in rows:
@@ -54,14 +29,6 @@ def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
 
 
 def _build_model(args: argparse.Namespace) -> EmbeddingModel:
-    """Builds an embedding model from command-line arguments.
-
-    Args:
-        args: The command-line arguments.
-
-    Returns:
-        The embedding model.
-    """
     max_tokens = None
     if getattr(args, "max_model_tokens", None):
         max_tokens = args.max_model_tokens if args.max_model_tokens > 0 else None
@@ -100,17 +67,6 @@ def _build_model(args: argparse.Namespace) -> EmbeddingModel:
 
 
 def _truncate_text_by_tokens(model: EmbeddingModel, text: str, max_tokens: Optional[int]) -> tuple[str, bool]:
-    """Truncates text by a maximum number of tokens.
-
-    Args:
-        model: The embedding model to use for token counting.
-        text: The text to truncate.
-        max_tokens: The maximum number of tokens.
-
-    Returns:
-        A tuple of the truncated text and a boolean indicating whether the
-        text was truncated.
-    """
     if not max_tokens or max_tokens <= 0:
         return text, False
     tc = model.token_count(text)
@@ -128,19 +84,6 @@ def _truncate_text_by_tokens(model: EmbeddingModel, text: str, max_tokens: Optio
 
 
 def embed_dir(in_dir: str, out_dir: str, model: EmbeddingModel, batch: int = 64, timeout_s: float = 60.0) -> tuple[List[str], int]:
-    """Embeds all normalized JSON files in a directory.
-
-    Args:
-        in_dir: The input directory.
-        out_dir: The output directory.
-        model: The embedding model to use.
-        batch: The batch size for embedding.
-        timeout_s: The timeout in seconds for embedding.
-
-    Returns:
-        A tuple of the list of written files and the total number of rows
-        written.
-    """
     in_dir = _resolve(in_dir)
     out_dir = _resolve(out_dir)
     os.makedirs(out_dir, exist_ok=True)
@@ -217,17 +160,6 @@ def embed_dir(in_dir: str, out_dir: str, model: EmbeddingModel, batch: int = 64,
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `embed_dir` to
-    embed the documents.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     p = argparse.ArgumentParser(prog="combo embed", description="Embed normalized chunks to vectors")
     p.add_argument("normalized_dir", help="Directory of normalized JSON files")
     p.add_argument("--out", required=True, help="Output directory for embeddings (JSONL)")

@@ -10,29 +10,11 @@ from .api import simple_ner, simple_link
 
 
 def _resolve(p: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        p: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(p))
 
 
 def _load_normalized_map(norm_dir: str) -> Dict[str, Dict[str, Any]]:
-    """Loads a map of normalized data from a directory of JSON files.
-
-    This function maps chunk IDs to a dictionary containing the doc ID, text,
-    source SHA1, and base filename.
-
-    Args:
-        norm_dir: The directory containing the normalized JSON files.
-
-    Returns:
-        A dictionary mapping chunk IDs to metadata.
-    """
+    """Map chunk_id -> {doc_id, text, source_sha1, base} from normalized JSONs."""
     out: Dict[str, Dict[str, Any]] = {}
     for name in os.listdir(norm_dir):
         if not name.endswith('.json'):
@@ -57,16 +39,6 @@ def _load_normalized_map(norm_dir: str) -> Dict[str, Dict[str, Any]]:
 
 
 def process_embedded(emb_dir: str, norm_dir: str, out_dir: str) -> Dict[str, int]:
-    """Processes a directory of embedded files to extract entities and relations.
-
-    Args:
-        emb_dir: The directory containing the embedded JSONL files.
-        norm_dir: The directory containing the normalized JSON files.
-        out_dir: The directory to write the output to.
-
-    Returns:
-        A dictionary of counts for entities, relations, and files.
-    """
     emb_dir = _resolve(emb_dir)
     norm_dir = _resolve(norm_dir)
     out_dir = _resolve(out_dir)
@@ -127,17 +99,6 @@ def process_embedded(emb_dir: str, norm_dir: str, out_dir: str) -> Dict[str, int
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `process_embedded`
-    to extract entities and relations.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     ap = argparse.ArgumentParser(prog='combo er', description='Entity/Relation extraction (simple)')
     ap.add_argument('embedded_dir', help='Directory of *.embedded.jsonl')
     ap.add_argument('--normalized-dir', required=True, help='Directory of normalized JSON to supply chunk text')

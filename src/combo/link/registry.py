@@ -7,27 +7,10 @@ from typing import Optional, Tuple
 
 
 def normalize_label(label: str) -> str:
-    """Normalizes a label by stripping whitespace and converting to lowercase.
-
-    Args:
-        label: The label to normalize.
-
-    Returns:
-        The normalized label.
-    """
     return (label or "").strip().lower()
 
 
 def open_registry(path: str, enable_fts: bool = False) -> sqlite3.Connection:
-    """Opens a connection to the SQLite registry.
-
-    Args:
-        path: The path to the SQLite file.
-        enable_fts: Whether to enable full-text search.
-
-    Returns:
-        A connection to the registry.
-    """
     conn = sqlite3.connect(path)
     conn.execute("PRAGMA journal_mode=WAL;")
     conn.execute("PRAGMA synchronous=NORMAL;")
@@ -36,12 +19,6 @@ def open_registry(path: str, enable_fts: bool = False) -> sqlite3.Connection:
 
 
 def init_schema(conn: sqlite3.Connection, enable_fts: bool = False) -> None:
-    """Initializes the database schema.
-
-    Args:
-        conn: The connection to the database.
-        enable_fts: Whether to enable full-text search.
-    """
     conn.executescript(
         """
         CREATE TABLE IF NOT EXISTS entities (
@@ -74,31 +51,11 @@ def init_schema(conn: sqlite3.Connection, enable_fts: bool = False) -> None:
 
 
 def deterministic_id(ent_type: str, normalized_label: str) -> str:
-    """Generates a deterministic UUIDv5 for an entity.
-
-    Args:
-        ent_type: The entity type.
-        normalized_label: The normalized label.
-
-    Returns:
-        A deterministic UUIDv5.
-    """
     # Deterministic UUIDv5 based on type|normalized_label
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"combo://entity/{(ent_type or '').upper()}|{normalize_label(normalized_label)}"))
 
 
 def get_or_create_canonical(conn: sqlite3.Connection, ent_type: str, normalized_label: str, primary_name: Optional[str] = None) -> str:
-    """Gets or creates a canonical entity in the registry.
-
-    Args:
-        conn: The connection to the database.
-        ent_type: The entity type.
-        normalized_label: The normalized label.
-        primary_name: The primary name of the entity.
-
-    Returns:
-        The canonical ID of the entity.
-    """
     ent_type_u = (ent_type or "").upper()
     norm = normalize_label(normalized_label)
     cur = conn.execute(
@@ -123,13 +80,6 @@ def get_or_create_canonical(conn: sqlite3.Connection, ent_type: str, normalized_
 
 
 def add_alias(conn: sqlite3.Connection, canonical_id: str, alias: str) -> None:
-    """Adds an alias for a canonical entity.
-
-    Args:
-        conn: The connection to the database.
-        canonical_id: The canonical ID of the entity.
-        alias: The alias to add.
-    """
     if not alias:
         return
     conn.execute("INSERT OR IGNORE INTO aliases(canonical_id, alias) VALUES (?,?)", (canonical_id, alias))
@@ -137,14 +87,6 @@ def add_alias(conn: sqlite3.Connection, canonical_id: str, alias: str) -> None:
 
 
 def add_external_id(conn: sqlite3.Connection, canonical_id: str, source: str, external_id: str) -> None:
-    """Adds an external ID for a canonical entity.
-
-    Args:
-        conn: The connection to the database.
-        canonical_id: The canonical ID of the entity.
-        source: The source of the external ID.
-        external_id: The external ID.
-    """
     if not external_id:
         return
     conn.execute(

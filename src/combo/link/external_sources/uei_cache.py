@@ -6,14 +6,6 @@ from typing import Dict, Optional
 
 
 def load_cache(path: Optional[str] = None) -> Dict[str, str]:
-    """Loads a UEI cache from a JSON file.
-
-    Args:
-        path: The path to the JSON file.
-
-    Returns:
-        A dictionary mapping normalized names to UEI IDs.
-    """
     if not path or not os.path.isfile(path):
         return {}
     with open(path, 'r', encoding='utf-8') as f:
@@ -35,13 +27,4 @@ def load_cache(path: Optional[str] = None) -> Dict[str, str]:
 
 
 def lookup(normalized_name: str, cache: Dict[str, str]) -> Optional[str]:
-    """Looks up a UEI ID for a normalized name.
-
-    Args:
-        normalized_name: The normalized name to look up.
-        cache: The UEI cache.
-
-    Returns:
-        The UEI ID, or None if not found.
-    """
     return cache.get((normalized_name or '').strip().lower())

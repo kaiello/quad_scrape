@@ -9,27 +9,10 @@ import numpy as np
 
 
 def _resolve(path: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        path: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(path))
 
 
 def load_embeddings(dir_path: str) -> tuple[np.ndarray, List[Dict[str, Any]]]:
-    """Loads all embeddings from a directory of JSONL files.
-
-    Args:
-        dir_path: The directory to load from.
-
-    Returns:
-        A tuple of the embeddings as a numpy array and a list of metadata
-        dictionaries.
-    """
     vecs: List[List[float]] = []
     meta: List[Dict[str, Any]] = []
     for name in os.listdir(dir_path):
@@ -47,17 +30,6 @@ def load_embeddings(dir_path: str) -> tuple[np.ndarray, List[Dict[str, Any]]]:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `load_embeddings`
-    to build the index.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     ap = argparse.ArgumentParser(prog='combo index', description='Build NPZ index from embedded JSONL files')
     ap.add_argument('emb_dir', help='Directory containing *.embedded.jsonl')
     ap.add_argument('--out', required=True, help='Output directory for NPZ index')

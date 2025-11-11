@@ -36,14 +36,6 @@ _DET_RE = re.compile(r"^(the|a|an)\s+", re.I)
 
 
 def _normalize_name(text: str) -> str:
-    """Normalizes a name by stripping determiners and making it lowercase.
-
-    Args:
-        text: The name to normalize.
-
-    Returns:
-        The normalized name.
-    """
     t = (text or "").strip()
     t = _DET_RE.sub("", t)  # strip leading determiners
     low = t.lower()
@@ -58,26 +50,10 @@ def _normalize_name(text: str) -> str:
 
 
 def _resolve(path: str) -> str:
-    """Resolves a path to an absolute path.
-
-    Args:
-        path: The path to resolve.
-
-    Returns:
-        The absolute path.
-    """
     return os.path.abspath(os.path.realpath(path))
 
 
 def _doc_type(meta: Dict[str, Any]) -> Optional[str]:
-    """Determines the document type from metadata.
-
-    Args:
-        meta: The document metadata.
-
-    Returns:
-        The document type, or None if it cannot be determined.
-    """
     mime = (meta or {}).get("mime")
     if mime and mime in MIME_MAP:
         return MIME_MAP[mime]
@@ -94,14 +70,6 @@ def _doc_type(meta: Dict[str, Any]) -> Optional[str]:
 
 
 def _iter_entities_from_dir(base_dir: str) -> Iterable[Tuple[str, Dict[str, Any]]]:
-    """Iterates over entities from a directory of JSONL files.
-
-    Args:
-        base_dir: The directory to read from.
-
-    Yields:
-        A tuple of the document base name and the entity.
-    """
     for name in os.listdir(base_dir):
         if not name.endswith('.entities.jsonl'):
             continue
@@ -117,14 +85,6 @@ def _iter_entities_from_dir(base_dir: str) -> Iterable[Tuple[str, Dict[str, Any]
 
 
 def _load_doc_meta_map(normalized_dir: Optional[str]) -> Dict[str, Dict[str, Any]]:
-    """Loads a map of document metadata from a directory of JSON files.
-
-    Args:
-        normalized_dir: The directory to read from.
-
-    Returns:
-        A dictionary mapping document IDs to metadata.
-    """
     if not normalized_dir:
         return {}
     out: Dict[str, Dict[str, Any]] = {}
@@ -160,26 +120,6 @@ def build_doc_props(
     min_thing_count: int = 1,
     allow_other_into_how: bool = False,
 ) -> Dict[str, Any]:
-    """Builds a dictionary of document properties from a list of mentions.
-
-    This function aggregates mentions into categories (who, what, when, where,
-    how) to provide a summary of the document's contents.
-
-    Args:
-        mentions: A list of mentions to process.
-        doc_meta: Optional metadata for the document.
-        max_fallback_dates: The maximum number of dates to extract from the
-            text preview if no date mentions are found.
-        things_labels: A set of labels to consider as "things" for the "how"
-            category.
-        min_thing_count: The minimum number of times a thing must be mentioned
-            to be included in the "how" category.
-        allow_other_into_how: Whether to include mentions with the "OTHER"
-            label in the "how" category.
-
-    Returns:
-        A dictionary of document properties.
-    """
     mentions = list(mentions or [])
     if not mentions and not doc_meta:
         return {}
@@ -288,32 +228,6 @@ def process_dirs(
     min_thing_count: int = 1,
     allow_other_into_how: bool = False,
 ) -> Dict[str, Any]:
-    """Processes directories of entities to build document properties.
-
-    This function reads entities from the input directory, groups them by
-    document, builds document properties for each document, and writes the
-    results to the output directory. It also generates a run report with
-    statistics.
-
-    Args:
-        er_or_coref_dir: The directory containing the entity files.
-        out_dir: The directory to write the results to.
-        normalized_dir: Optional directory containing normalized document
-            metadata.
-        used_coref: Whether the input directory contains coreference-resolved
-            entities.
-        max_fallback_dates: The maximum number of dates to extract from the
-            text preview if no date mentions are found.
-        things_labels: A set of labels to consider as "things" for the "how"
-            category.
-        min_thing_count: The minimum number of times a thing must be mentioned
-            to be included in the "how" category.
-        allow_other_into_how: Whether to include mentions with the "OTHER"
-            label in the "how" category.
-
-    Returns:
-        A dictionary containing statistics about the run.
-    """
     er_or_coref_dir = _resolve(er_or_coref_dir)
     out_dir = _resolve(out_dir)
     os.makedirs(out_dir, exist_ok=True)
@@ -376,17 +290,6 @@ def process_dirs(
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `process_dirs` to
-    build document properties.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
     ap = argparse.ArgumentParser(prog='combo fourw', description='Aggregate Who/What/When/Where/How from ER/Coref entities')
     ap.add_argument('input_dir', help='ER or Coref directory (expects *.entities.jsonl)')
     ap.add_argument('--out', required=True, help='Output directory for 4W results')
