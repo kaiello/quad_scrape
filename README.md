@@ -75,6 +75,40 @@ py -m poetry run python -m combo validate "tmp_norm"
 
 ---
 
+### Step C: Within-Document Coreference
+
+This step links pronouns and referring expressions (e.g., *it, they, this system*) to their antecedent entity mentions inside the same document. This ensures all mentions that describe the same thing share a common `resolved_entity_id`.
+
+**Command:**
+
+```bash
+py -m combo coref tmp_er \
+  --out tmp_coref \
+  --max-sent-back 3 \
+  --max-mentions-back 30
+```
+
+**Arguments & Flags:**
+
+| Argument | Description | Example |
+| :--- | :--- | :--- |
+| `er-dir` (positional) | **Required.** Input directory from Step B (ER). | `tmp_er` |
+| `--out` | **Required.** Output directory for coref results. | `tmp_coref` |
+| `--max-sent-back` | (Optional) Sentences to look backward. | `3` (default) |
+| `--max-mentions-back` | (Optional) Mention window size. | `30` (default) |
+
+**✅ How to Verify Success:**
+
+You can confirm the step ran successfully by checking the following:
+
+1.  The command finishes with an **exit code 0**.
+2.  The output directory (e.g., `tmp_coref/`) is created.
+3.  The `tmp_coref/` directory contains an **`.entities.jsonl` file for every input file**.
+4.  Each output `.entities.jsonl` file has the **identical line count** as its corresponding input file.
+5.  The `tmp_coref/_reports/run_report.json` file exists and shows non-zero values for `mentions` and `pronouns_total`.
+
+---
+
 ### Step D — Link Entities
 
 ```powershell
