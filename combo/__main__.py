@@ -48,6 +48,20 @@ def main() -> int:
     if cmd == "link":
         from src.combo.link.linker import main as link_main
         return link_main(args[1:])
+    if cmd == "promote":
+        from src.combo.pipeline.promote import main as promote_main
+        return promote_main(args[1:])
+    if cmd == "quarantine":
+        # Subcommands: summarize
+        if len(args) < 2:
+            print("Usage: py -m combo quarantine summarize <quarantine_dir> --out <md> [--json <json>]")
+            return 2
+        sub = args[1]
+        if sub == "summarize":
+            from src.combo.pipeline.quarantine import main as qsum_main
+            return qsum_main(args[2:])
+        print(f"Unknown quarantine subcommand: {sub}")
+        return 2
     print(f"Unknown command: {cmd}")
     return 2
 

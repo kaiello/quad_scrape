@@ -1,0 +1,316 @@
+schema_version: "1.0.0"
+
+promotion_defaults:
+  conf_thr: 0.7
+  min_evidence: 2
+  max_mentions_in_relation: 20
+
+entities:
+  dbo_Organisation:
+    labels: ["Organization"]
+    key: ["uri"]
+    required: ["uri"]
+    optional: ["name"]
+
+  dbo_Location:
+    labels: ["kb_Location","Location"]
+    key: ["uri","name"]  # either permitted
+    required_one_of: ["uri","name"]
+    optional: ["latitude","longitude"]
+
+  dbo_Technology:
+    labels: ["kb_Technology","Technology"]
+    key: ["uri"]
+    required: ["uri"]
+    optional: ["name","description","projected_availability_date"]
+
+  kb_Program:
+    labels: ["Program"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["description","status","problem_statement","problem_context","benefits"]
+
+  kb_Project:
+    labels: ["Project"]
+    key: ["code"]
+    required: ["code"]
+    optional: ["sponsor","objective","budget_usd","start_date"]
+
+  kb_Portfolio:
+    labels: ["Portfolio"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Person:
+    labels: ["Person"]
+    key: ["email"]
+    required: ["email"]
+    optional: ["name","phone","title"]
+
+  kb_Capability:
+    labels: ["Capability"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["description"]
+
+  kb_Asset:
+    labels: ["Asset"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_System:
+    labels: ["kb_Asset","Asset","System"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_System_Variant:
+    labels: ["kb_System","kb_Asset","Asset","System","System_Variant"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Component:
+    labels: ["Component"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["description"]
+
+  kb_Tool:
+    labels: ["Tool"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["description"]
+
+  kb_Threat:
+    labels: ["Threat"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Property:
+    labels: ["Property"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Environment:
+    labels: ["Environment"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Service:
+    labels: ["Service"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Domain:
+    labels: ["Domain"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Standard:
+    labels: ["Standard"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Requirement:
+    labels: ["Requirement"]
+    key: ["id"]
+    required: ["id"]
+    optional: ["type","priority","text"]
+
+  kb_TRL:
+    labels: ["TRL"]
+    key: ["value"]
+    required: ["value"]
+    constraints:
+      value_range: [1,9]
+
+  kb_RFI:
+    labels: ["RFI"]
+    key: ["rfi_id"]
+    required: ["rfi_id"]
+    optional: ["title","issue_date","status"]
+
+  kb_Contract:
+    labels: ["Contract"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["type"]
+
+  kb_Milestone:
+    labels: ["Milestone"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Scenario:
+    labels: ["Scenario"]
+    key: ["name"]
+    required: ["name"]
+    optional: []
+
+  kb_Deliverable:
+    labels: ["Deliverable"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["quantity"]
+
+  kb_Document:
+    labels: ["kb_Deliverable","Deliverable","Document"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["quantity"]
+
+  kb_Prototype:
+    labels: ["kb_Deliverable","Deliverable","Prototype"]
+    key: ["name"]
+    required: ["name"]
+    optional: ["quantity"]
+
+relations:
+  DEVELOPS:
+    domain: ["Organization","Person"]
+    range: ["Technology","System","Component","Tool","Asset"]
+  PROVIDES:
+    domain: ["Organization","Service"]
+    range: ["Service","Capability","Tool","Technology"]
+  SPONSORS:
+    domain: ["Organization","Person"]
+    range: ["Program","Project","Portfolio"]
+  OPERATES:
+    domain: ["Organization"]
+    range: ["System","Service","Asset"]
+  LOCATED_IN:
+    domain: ["Organization","Project","Person","Asset","System","Component"]
+    range: ["Location","kb_Location"]
+  BASED_IN:
+    domain: ["Organization"]
+    range: ["Location","kb_Location"]
+  MEMBER_OF:
+    domain: ["Person"]
+    range: ["Organization","Program","Project"]
+  USES_TOOL:
+    domain: ["Person","Organization","Project","System"]
+    range: ["Tool"]
+  ADHERES_TO:
+    domain: ["Organization","Project","System","Process"]
+    range: ["Standard"]
+  RESPONDED_TO:
+    domain: ["Organization"]
+    range: ["RFI"]
+  FUNDS:
+    domain: ["Organization","Program"]
+    range: ["Project","Program"]
+  DELIVERS:
+    domain: ["Organization","Project","Contract"]
+    range: ["Deliverable"]
+  USES:
+    domain: ["Project","System","Component","Organization"]
+    range: ["Technology","Tool","Service","Standard"]
+  HAS_REQUIREMENT:
+    domain: ["Project","System","Component","Program","RFI"]
+    range: ["Requirement"]
+  SEEKS_PARTNER:
+    domain: ["Organization","Project"]
+    range: ["Organization"]
+  ENABLES:
+    domain: ["Capability","Technology","System"]
+    range: ["Capability","Project"]
+  LEVERAGES:
+    domain: ["Project","Organization","System"]
+    range: ["Capability","Technology","Tool"]
+  HAS_PROPERTY:
+    domain: ["Technology","System","Component","Asset"]
+    range: ["Property"]
+  DESIGNED_FOR:
+    domain: ["System","Component","Technology"]
+    range: ["Environment","Scenario","Threat"]
+  CLASSIFIED_AS:
+    domain: ["Technology","System","Threat","Domain"]
+    range: ["Domain","Threat","Capability"]
+  APPLIES_TO:
+    domain: ["Standard","Requirement"]
+    range: ["Technology","System","Project"]
+  SUPPORTS:
+    domain: ["Capability","Service","Technology"]
+    range: ["Project","Capability"]
+  PROTECTS:
+    domain: ["System","Technology"]
+    range: ["Asset","Threat","Project"]
+  ACTS_UPON:
+    domain: ["Technology","System"]
+    range: ["Threat","Environment"]
+  INTEGRATES_WITH:
+    domain: ["System","Technology","Component"]
+    range: ["System","Technology","Component"]
+  PROVIDES_CAPABILITY:
+    domain: ["System","Technology","Service","Organization"]
+    range: ["Capability"]
+  SERVICES:
+    domain: ["Organization"]
+    range: ["Organization","Project"]
+  PART_OF:
+    domain: ["Component","System","Project"]
+    range: ["System","Project","Portfolio"]
+  COMPOSED_OF:
+    domain: ["System","Asset"]
+    range: ["Component","Asset"]
+  ACTS_AGAINST:
+    domain: ["System","Technology"]
+    range: ["Threat"]
+  RELATED_TO:
+    domain: ["*"]
+    range: ["*"]
+  FOR_TECHNOLOGY:
+    domain: ["Requirement","RFI","Document"]
+    range: ["Technology"]
+  ISSUED_BY:
+    domain: ["RFI","Contract"]
+    range: ["Organization"]
+  ABOUT:
+    domain: ["Document"]
+    range: ["Project","Technology","System","Capability","Requirement"]
+  SEEKS:
+    domain: ["RFI"]
+    range: ["Capability","Technology","Service"]
+  ASKS_ABOUT:
+    domain: ["RFI"]
+    range: ["Requirement","Standard","Capability","Technology"]
+  RELATED_TO_TECHNOLOGY:
+    domain: ["*"]
+    range: ["Technology"]
+  HAS_MILESTONE:
+    domain: ["Project","Program","Contract"]
+    range: ["Milestone"]
+  HAS_DELIVERABLE:
+    domain: ["Project","Contract","RFI"]
+    range: ["Deliverable"]
+  STARTS_AT_TRL:
+    domain: ["Project","Program","Technology","System"]
+    range: ["TRL"]
+  ENDS_AT_TRL:
+    domain: ["Project","Program","Technology","System"]
+    range: ["TRL"]
+  WORDS_FOR:
+    domain: ["Document"]
+    range: ["Organization","Project","Technology","System","RFI","Contract"]
+  IS_POC_FOR:
+    domain: ["Person"]
+    range: ["Project","Program","Organization","RFI"]
+  VARIANT_OF:
+    domain: ["System","System_Variant","kb_System_Variant"]
+    range: ["System","kb_System"]
+  ALIGNED_WITH:
+    domain: ["Project","Program","Organization","Standard"]
+    range: ["Standard","Domain","Program"]
+  ENDORSED_BY:
+    domain: ["Technology","System","Standard"]
+    range: ["Organization","Person"]
