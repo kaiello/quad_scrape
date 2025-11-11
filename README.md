@@ -37,10 +37,10 @@ The purpose of this project is to provide a comprehensive and extensible pipelin
 ---
 
 ## 🧰 Requirements
-- Python 3.8 – 3.12  
-- Poetry (https://python-poetry.org/)  
-- Optional system tools  
-  - Tesseract OCR (`tesseract.exe` on PATH)  
+- Python 3.8 – 3.12
+- Poetry (https://python-poetry.org/)
+- Optional system tools
+  - Tesseract OCR (`tesseract.exe` on PATH)
   - Poppler (`bin` on PATH; only for pdf2image fallback)
 
 ---
@@ -312,6 +312,6 @@ If any step fails:
 
 ---
 
-✅ Next Step:  
-Commit this updated `README.md` (and ensure `make_chunks_deep.py` + `audit_norm.py` exist in repo).  
+✅ Next Step:
+Commit this updated `README.md` (and ensure `make_chunks_deep.py` + `audit_norm.py` exist in repo).
 Then hand it to Codex — it can follow the “Codex Handoff Instructions” verbatim to replicate your working local run.
