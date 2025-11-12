@@ -18,9 +18,9 @@ MIME_MAP: Dict[str, str] = {
 }
 
 DATE_PATTERNS = [
-    re.compile(r"\b(20\d{2}|19\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])\b"),
-    re.compile(r"\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2},\s*(20\d{2}|19\d{2})\b", re.I),
-    re.compile(r"\b(20\d{2}|19\d{2})\b"),
+    re.compile(r" (20\d{2}|19\d{2})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01]) "),
+    re.compile(r" (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2},\s*(20\d{2}|19\d{2}) ", re.I),
+    re.compile(r" (20\d{2}|19\d{2}) "),
 ]
 
 # Labels considered "things" (for HOW) by default
@@ -373,47 +373,3 @@ def process_dirs(
             'top_orgs': [[n, c] for n, c in top_orgs.most_common(10) if n],
         }, f, ensure_ascii=False, sort_keys=True, indent=2)
     return {'docs': docs, **dict(totals)}
-
-
-def main(argv: Optional[List[str]] = None) -> int:
-    """The main entry point for the command-line interface.
-
-    This function parses command-line arguments and calls `process_dirs` to
-    build document properties.
-
-    Args:
-        argv: A list of command-line arguments.
-
-    Returns:
-        An exit code.
-    """
-    ap = argparse.ArgumentParser(prog='combo fourw', description='Aggregate Who/What/When/Where/How from ER/Coref entities')
-    ap.add_argument('input_dir', help='ER or Coref directory (expects *.entities.jsonl)')
-    ap.add_argument('--out', required=True, help='Output directory for 4W results')
-    ap.add_argument('--coref-dir', default=None, help='If provided, prefer entities from this coref directory')
-    ap.add_argument('--normalized-dir', default=None, help='Optional normalized dir for doc metadata')
-    ap.add_argument('--max-fallback-dates', type=int, default=5)
-    ap.add_argument('--things-labels', default=None, help='CSV labels to include as HOW things (default: built-in set)')
-    ap.add_argument('--min-thing-count', type=int, default=1)
-    ap.add_argument('--allow-other-into-how', action='store_true')
-    args = ap.parse_args(argv)
-    try:
-        src_dir = args.coref_dir or args.input_dir
-        used_coref = bool(args.coref_dir)
-        tlabels = None
-        if args.things_labels:
-            tlabels = {s.strip().upper() for s in args.things_labels.split(',') if s.strip()}
-        process_dirs(
-            src_dir,
-            args.out,
-            normalized_dir=args.normalized_dir,
-            used_coref=used_coref,
-            max_fallback_dates=args.max_fallback_dates,
-            things_labels=tlabels,
-            min_thing_count=args.min_thing_count,
-            allow_other_into_how=args.allow_other_into_how,
-        )
-        return 0
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-        return 1

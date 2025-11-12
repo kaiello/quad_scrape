@@ -33,3 +33,6 @@ pythonpath = ["."]
 combo-embed = "src.combo.embed.cli:main"
 combo-er = "src.combo.er.cli:main"
 combo-coref = "src.combo.coref.cli:main"
+combo-docprops = "src.combo.docprops.cli:main"
+combo-normalize = "src.combo.normalize.cli:main"
+combo-link = "src.combo.link.cli:main"
