@@ -28,3 +28,8 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.poetry.scripts]
+combo-embed = "combo.embed.cli:main"
+combo-er = "combo.er.cli:main"
+combo-coref = "combo.coref.cli:main"
