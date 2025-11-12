@@ -30,6 +30,6 @@ build-backend = "poetry.core.masonry.api"
 pythonpath = ["."]
 
 [tool.poetry.scripts]
-combo-embed = "combo.embed.cli:main"
-combo-er = "combo.er.cli:main"
-combo-coref = "combo.coref.cli:main"
+combo-embed = "src.combo.embed.cli:main"
+combo-er = "src.combo.er.cli:main"
+combo-coref = "src.combo.coref.cli:main"
