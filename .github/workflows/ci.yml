@@ -16,14 +16,13 @@ jobs:
           python-version: '3.11'
 
       - name: Install Poetry
-        run: |
-          pipx install poetry==1.8.3
-          poetry --version
+        uses: snok/install-poetry@v1
+        with:
+          version: 1.8.3
 
       - name: Install dependencies
         run: |
           poetry install --no-interaction --no-root
-          poetry run pip install -e .
 
       - name: Run pytest
         run: |
@@ -32,13 +31,7 @@ jobs:
       - name: Build Step D linked artifacts (optional)
         if: always()
         run: |
-          poetry run python -m combo link tests/fixtures/coref \
-            --registry linked_ci_registry.sqlite \
-            --out linked_ci \
-            --link-conf 0.75 \
-            --adapters wikidata,uei \
-            --wikidata-cache tests/fixtures/wikidata_cache.json \
-            --uei-cache tests/fixtures/uei_cache.json || true
+          poetry run combo-coref tests/fixtures/coref \n            --out linked_ci || true
 
       - name: Upload Step D artifacts (optional)
         if: always()
