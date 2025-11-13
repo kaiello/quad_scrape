@@ -11,7 +11,7 @@ FIX = pathlib.Path(__file__).with_name("fixtures")
 def test_array_and_object_inputs_produce_outputs():
     with tempfile.TemporaryDirectory() as out:
         res = subprocess.run(
-            [sys.executable, "-m", "combo", "normalize", str(FIX), "--out", out],
+            ["combo-normalize", str(FIX), "--out", out],
             capture_output=True,
             text=True,
         )
@@ -24,7 +24,7 @@ def test_array_and_object_inputs_produce_outputs():
 
 def test_nonpdf_single_page_behavior():
     doc = json.loads((FIX / "nonpdf_simple.json").read_text(encoding="utf-8"))
-    from combo.normalize.segment import segment_to_sentences
+    from combo.normalize.api import segment_to_sentences
 
     sents = segment_to_sentences(doc)
     assert all((s.get("page") or 1) == 1 for s in sents)

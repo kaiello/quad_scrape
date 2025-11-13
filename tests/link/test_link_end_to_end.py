@@ -19,7 +19,7 @@ def test_link_end_to_end_and_sorted():
 
         out = wd / "linked"
         db = wd / "registry.sqlite"
-        res = subprocess.run([sys.executable, "-m", "combo", "link", str(coref), "--registry", str(db), "--out", str(out)], capture_output=True, text=True)
+        res = subprocess.run(["combo-link", str(coref), "--registry", str(db), "--out", str(out)], capture_output=True, text=True)
         assert res.returncode == 0, res.stderr
         linked_path = out / "linked.entities.jsonl"
         assert linked_path.exists()

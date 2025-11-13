@@ -18,7 +18,7 @@ def test_external_ids_unique_per_source():
         cache = wd / "wikidata.json"
         cache.write_text(json.dumps({"acme": "Q123"}), encoding="utf-8")
         out = wd / "linked"; db = wd / "registry.sqlite"
-        res = subprocess.run([sys.executable, "-m", "combo", "link", str(coref), "--registry", str(db), "--out", str(out), "--adapters", "wikidata", "--wikidata-cache", str(cache)], capture_output=True, text=True)
+        res = subprocess.run(["combo-link", str(coref), "--registry", str(db), "--out", str(out), "--adapters", "wikidata", "--wikidata-cache", str(cache)], capture_output=True, text=True)
         assert res.returncode == 0, res.stderr
         con = sqlite3.connect(str(db))
         cur = con.execute("SELECT COUNT(*) FROM external_ids WHERE source='wikidata' AND external_id='Q123'")

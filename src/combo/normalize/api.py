@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .validate import validate_normalized_object
 
 import hashlib
 import json

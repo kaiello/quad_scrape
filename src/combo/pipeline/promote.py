@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import yaml
 import os
 import time
 from collections import defaultdict, Counter
@@ -45,13 +46,7 @@ def _write_jsonl(path: str, rows: List[Dict[str, Any]]) -> int:
 def _load_schema(schema_path: str) -> Dict[str, Any]:
     with open(schema_path, 'r', encoding='utf-8') as f:
         text = f.read()
-    # Try YAML first if available
-    try:
-        import yaml  # type: ignore
-        return yaml.safe_load(text)
-    except Exception:
-        # Fallback to JSON
-        return json.loads(text)
+    return yaml.safe_load(text)
 
 
 def _schema_lookup(schema: Mapping[str, Any]) -> Tuple[str, Dict[str, Any], Dict[str, Any]]:

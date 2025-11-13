@@ -1,4 +1,4 @@
-from combo.link.registry import deterministic_id
+from combo.link.api import deterministic_id
 
 
 def test_uuidv5_stability():

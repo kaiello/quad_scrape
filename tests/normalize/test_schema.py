@@ -1,8 +1,8 @@
 import json
 import pathlib
 
-from combo.normalize.segment import segment_to_sentences, build_chunks
-from combo.normalize.validate import validate_normalized_object
+from combo.normalize.api import segment_to_sentences, build_chunks
+from combo.normalize.api import validate_normalized_object
 
 
 FIX = pathlib.Path(__file__).with_name("fixtures")

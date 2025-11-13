@@ -29,7 +29,7 @@ def test_er_pipeline_minimal():
         (emb_dir / "sample.normalized.embedded.jsonl").write_text(json.dumps(emb_row)+"\n", encoding="utf-8")
 
         out_dir = wd / "er"
-        res = subprocess.run([sys.executable, "-m", "combo", "er", str(emb_dir), "--normalized-dir", str(norm_dir), "--out", str(out_dir)], capture_output=True, text=True)
+        res = subprocess.run(["combo-er", str(emb_dir), "--normalized-dir", str(norm_dir), "--out", str(out_dir)], capture_output=True, text=True)
         assert res.returncode == 0, res.stderr
         ents = list(out_dir.glob("*.entities.jsonl"))
         rels = list(out_dir.glob("*.rels.jsonl"))

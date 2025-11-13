@@ -11,7 +11,7 @@ FIXT = pathlib.Path(__file__).with_name("fixtures")
 def test_output_is_deterministic_json_serialization():
     with tempfile.TemporaryDirectory() as outdir:
         res = subprocess.run(
-            [sys.executable, "-m", "combo", "normalize", str(FIXT), "--out", outdir],
+            ["combo-normalize", str(FIXT), "--out", outdir],
             capture_output=True,
             text=True,
         )

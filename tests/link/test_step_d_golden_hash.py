@@ -20,7 +20,7 @@ def test_step_d_output_hash_matches_golden(tmp_path: Path):
     registry = tmp_path / "registry.sqlite"
 
     sh(
-        sys.executable, "-m", "combo", "link",
+        "combo-link",
         str(fixtures / "coref"),
         "--registry", str(registry),
         "--out", str(outdir),

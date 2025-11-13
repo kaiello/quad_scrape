@@ -30,9 +30,9 @@ build-backend = "poetry.core.masonry.api"
 pythonpath = ["."]
 
 [tool.poetry.scripts]
-combo-embed = "src.combo.embed.cli:main"
-combo-er = "src.combo.er.cli:main"
-combo-coref = "src.combo.coref.cli:main"
-combo-docprops = "src.combo.docprops.cli:main"
-combo-normalize = "src.combo.normalize.cli:main"
-combo-link = "src.combo.link.cli:main"
+combo-embed = "combo.embed.cli:main"
+combo-er = "combo.er.cli:main"
+combo-coref = "combo.coref.cli:main"
+combo-docprops = "combo.docprops.cli:main"
+combo-normalize = "combo.normalize.cli:main"
+combo-link = "combo.link.cli:main"

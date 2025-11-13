@@ -26,7 +26,7 @@ def test_fourw_basic_grouping_and_report():
         (norm/"sample.normalized.json").write_text(json.dumps(norm_obj), encoding="utf-8")
 
         out = wd / "fourw"
-        res = subprocess.run([sys.executable, "-m", "combo", "fourw", str(er), "--out", str(out), "--normalized-dir", str(norm)], capture_output=True, text=True)
+        res = subprocess.run(["combo-fourw", str(er), "--out", str(out), "--normalized-dir", str(norm)], capture_output=True, text=True)
         assert res.returncode == 0, res.stderr
         # Read docprops
         dp_path = out/"sample.docprops.jsonl"

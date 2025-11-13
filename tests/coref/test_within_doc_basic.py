@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from combo.coref.within_doc import resolve_coref
+from combo.coref.api import resolve_coref
 
 
 def mk(doc_id, chunk_id, text, start, end, typ="PERSON", sent_id=0):

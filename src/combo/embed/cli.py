@@ -5,7 +5,6 @@ import json
 import os
 from typing import List, Dict, Any, Optional
 
-from .api import embed_dir, LocalDeterministicAdapter, EmbeddingModel
 from .adapters import REGISTRY
 from .utils import select_gguf, _resolve as _resolve_path
 
@@ -68,6 +67,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     Returns:
         An exit code.
     """
+    from .api import embed_dir, LocalDeterministicAdapter, EmbeddingModel
     p = argparse.ArgumentParser(prog="combo embed", description="Embed normalized chunks to vectors")
     p.add_argument("normalized_dir", help="Directory of normalized JSON files")
     p.add_argument("--out", required=True, help="Output directory for embeddings (JSONL)")

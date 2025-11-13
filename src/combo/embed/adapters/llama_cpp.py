@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from typing import List, Optional
 
-from ..api import EmbeddingModel
 
 
+
+from ..models import EmbeddingModel
 class LlamaCppAdapter(EmbeddingModel):
     """An embedding model adapter for `llama-cpp-python`.
 

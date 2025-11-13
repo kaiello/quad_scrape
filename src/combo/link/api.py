@@ -1,4 +1,5 @@
 from __future__ import annotations
+from .registry import deterministic_id
 
 import json
 import os

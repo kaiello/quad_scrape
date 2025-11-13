@@ -1,5 +1,5 @@
 import os
-from combo.embed.doctor import select_gguf
+from combo.embed.api import select_gguf
 
 
 def test_select_gguf_prefers_bge_and_smallest(tmp_path):

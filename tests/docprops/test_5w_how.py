@@ -20,8 +20,7 @@ def test_how_things_grouping_and_min_count():
         (er/"sample.entities.jsonl").write_text("\n".join(json.dumps(e) for e in ents)+"\n", encoding="utf-8")
 
         out = wd / "fourw"
-        res = subprocess.run([
-            sys.executable, "-m", "combo", "fourw", str(er), "--out", str(out),
+        res = subprocess.run(["combo-fourw", str(er), "--out", str(out),
             "--things-labels", "DEVICE,BOAT", "--min-thing-count", "1",
         ], capture_output=True, text=True)
         assert res.returncode == 0, res.stderr
@@ -36,8 +35,7 @@ def test_how_things_grouping_and_min_count():
 
         # Test allow_other_into_how and min count filter
         out2 = wd / "fourw2"
-        res2 = subprocess.run([
-            sys.executable, "-m", "combo", "fourw", str(er), "--out", str(out2),
+        res2 = subprocess.run(["combo-fourw", str(er), "--out", str(out2),
             "--allow-other-into-how", "--min-thing-count", "2",
         ], capture_output=True, text=True)
         assert res2.returncode == 0, res2.stderr

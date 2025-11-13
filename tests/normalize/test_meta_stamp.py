@@ -12,7 +12,7 @@ FIXT = pathlib.Path(__file__).with_name("fixtures")
 def test_meta_has_version_and_checksum():
     with tempfile.TemporaryDirectory() as outdir:
         res = subprocess.run(
-            [sys.executable, "-m", "combo", "normalize", str(FIXT), "--out", outdir],
+            ["combo-normalize", str(FIXT), "--out", outdir],
             capture_output=True,
             text=True,
         )

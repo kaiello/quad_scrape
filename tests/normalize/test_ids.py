@@ -1,7 +1,7 @@
 import json
 import pathlib
 
-from combo.normalize.segment import segment_to_sentences, build_chunks
+from combo.normalize.api import segment_to_sentences, build_chunks
 
 
 FIX = pathlib.Path(__file__).with_name("fixtures")
