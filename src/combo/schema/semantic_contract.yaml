@@ -216,7 +216,7 @@ relations:
     domain: ["Project","System","Component","Organization"]
     range: ["Technology","Tool","Service","Standard"]
   HAS_REQUIREMENT:
-    domain: ["Project","System","Component","Program","RFI"]
+    domain: ["Project","System","Component","Program","RFI","Technology"]
     range: ["Requirement"]
   SEEKS_PARTNER:
     domain: ["Organization","Project"]

@@ -83,9 +83,6 @@ def predicate_specific_ok(
     rel_props: Optional[Mapping[str, Any]],
     schema_entities: Mapping[str, Any],
 ) -> bool:
-    # Example: HAS_REQUIREMENT ensures object has Requirement label
-    if predicate == "HAS_REQUIREMENT":
-        return labels_satisfy(obj.get("labels") or [], ["Requirement", "kb_Requirement"]) and entity_keys_present(obj, schema_entities)
     # TRL constraints: ensure obj type constraints are satisfied if kb_TRL
     if predicate in {"STARTS_AT_TRL", "ENDS_AT_TRL", "AT_TRL"}:
         if (obj.get("type") or "").endswith("TRL") or "TRL" in (obj.get("labels") or []):
