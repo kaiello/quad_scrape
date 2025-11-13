@@ -271,7 +271,7 @@ def promote(
         promoted_entity_ids.add(oid)
 
     # Entities to emit: in promoted relations OR standalone >= min_evidence
-    for cid, stats in ent_ev.items():
+    for cid, stats in sorted(ent_ev.items()):
         if stats.get('ev_count', 0) >= int(min_evidence_val):
             promoted_entity_ids.add(cid)
 
@@ -290,6 +290,8 @@ def promote(
         missing = missing_merge_keys(ce, schema_entities)
         if missing:
             reasons.append(f"missing_keys:{','.join(missing)}")
+        if not entity_keys_present(ce, schema_entities):
+            reasons.append('missing_entity_keys')
         if not type_constraints_ok(ce, schema_entities):
             reasons.append('type_constraint_failed')
         stats = ent_ev.get(cid) or {'ev_count': 0, 'doc_count': 0}

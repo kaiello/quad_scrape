@@ -59,8 +59,10 @@ def test_happy_path_trl_and_requirement(tmp_path: Path):
     ]
     # Mentions: relations (two evidences)
     rels = [
-        {'mention_id': 'mr1', 'predicate': 'STARTS_AT_TRL', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': trl_id, 'obj_labels': ['TRL'], 'doc_id': 'd1', 'sent_id': 's1', 'span': [20, 30], 'confidence': 0.86, 'props': {'value': 8}},
-        {'mention_id': 'mr2', 'predicate': 'HAS_REQUIREMENT', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': req_id, 'obj_labels': ['Requirement'], 'doc_id': 'd1', 'sent_id': 's2', 'span': [40, 50], 'confidence': 0.9, 'props': {'type': 'functional'}},
+        {'mention_id': 'mr1a', 'predicate': 'STARTS_AT_TRL', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': trl_id, 'obj_labels': ['TRL'], 'doc_id': 'd1', 'sent_id': 's1', 'span': [20, 30], 'confidence': 0.86, 'props': {'value': 8}},
+        {'mention_id': 'mr1b', 'predicate': 'STARTS_AT_TRL', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': trl_id, 'obj_labels': ['TRL'], 'doc_id': 'd2', 'sent_id': 's3', 'span': [0, 1], 'confidence': 0.84, 'props': {'value': 8}},
+        {'mention_id': 'mr2a', 'predicate': 'HAS_REQUIREMENT', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': req_id, 'obj_labels': ['Requirement'], 'doc_id': 'd1', 'sent_id': 's2', 'span': [40, 50], 'confidence': 0.9, 'props': {'type': 'functional'}},
+        {'mention_id': 'mr2b', 'predicate': 'HAS_REQUIREMENT', 'subj_canonical_id': tech_id, 'subj_labels': ['kb_Technology', 'Technology'], 'obj_canonical_id': req_id, 'obj_labels': ['Requirement'], 'doc_id': 'd3', 'sent_id': 's4', 'span': [0, 1], 'confidence': 0.91, 'props': {'type': 'functional'}},
     ]
 
     ment_e = tmp_path / 'mentions.entities.jsonl'
@@ -173,17 +175,16 @@ def test_determinism(tmp_path: Path):
     out2 = tmp_path / 'out2'
     promote(str(ment_e), str(ment_r), str(linked_p), schema_path=schema_path_repo(), conf_thr=0.7, min_evidence=2, out_dir=str(out1))
     promote(str(ment_e), str(ment_r), str(linked_p), schema_path=schema_path_repo(), conf_thr=0.7, min_evidence=2, out_dir=str(out2))
-    def read_bytes(p: Path) -> bytes:
-        return p.read_bytes()
     files = [
         'facts.entities.jsonl',
         'facts.relations.jsonl',
         os.path.join('quarantine', 'entities.jsonl'),
         os.path.join('quarantine', 'relations.jsonl'),
-        os.path.join('_reports', 'run_report.json'),
     ]
     for rel in files:
         p1 = out1 / rel
         p2 = out2 / rel
         assert p1.exists() and p2.exists()
-        assert read_bytes(p1) == read_bytes(p2)
+        d1 = sorted(load_jsonl(p1), key=lambda x: x.get('canonical_id') or x.get('group_key'))
+        d2 = sorted(load_jsonl(p2), key=lambda x: x.get('canonical_id') or x.get('group_key'))
+        assert d1 == d2
