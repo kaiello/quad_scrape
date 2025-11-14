@@ -259,9 +259,9 @@ def promote(
                 rel_props = m.get('props')
                 break
         promoted_rel_rows.append({
-            'subj': {'canonical_id': sid, 'labels': subj.get('labels') if subj else []},
+            'subj': {'canonical_id': sid, 'labels': sorted(list(set(subj.get('labels', [])))) if subj else []},
             'predicate': pred,
-            'obj': {'canonical_id': oid, 'labels': obj.get('labels') if obj else []},
+            'obj': {'canonical_id': oid, 'labels': sorted(list(set(obj.get('labels', [])))) if obj else []},
             'props': rel_props or {},
             'evidence': agg,
             'policy': {'conf_thr': float(conf_thr), 'min_ev': int(min_evidence_val)},
@@ -300,7 +300,7 @@ def promote(
                 'kind': 'entity',
                 'canonical_id': cid,
                 'type': ce.get('type'),
-                'labels': ce.get('labels'),
+                'labels': sorted(list(set(ce.get('labels', [])))),
                 'reasons': sorted(set(reasons)),
                 'provenance': {'schema_version': schema_version, 'ev_count': stats.get('ev_count', 0), 'doc_count': stats.get('doc_count', 0)},
             })
@@ -308,7 +308,7 @@ def promote(
         promoted_ent_rows.append({
             'canonical_id': cid,
             'type': ce.get('type'),
-            'labels': ce.get('labels'),
+            'labels': sorted(list(set(ce.get('labels', [])))),
             'key': ce.get('key') or {},
             'props': ce.get('props') or {},
             'provenance': {'schema_version': schema_version, 'ev_count': stats.get('ev_count', 0), 'doc_count': stats.get('doc_count', 0)},
