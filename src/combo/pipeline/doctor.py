@@ -231,5 +231,3 @@ def main(argv: Optional[List[str]] = None) -> int:
     return int(code)
 
 
-if __name__ == "__main__":
-    raise SystemExit(main())
