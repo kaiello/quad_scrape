@@ -250,7 +250,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\assert_success.ps1
 
 ---
 
-## Handoff Instructions
+## Agent Handoff Instructions
 
 Task: Run and validate Steps A → D of the `quad-scrape` pipeline locally.
 
