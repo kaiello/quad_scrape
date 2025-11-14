@@ -250,7 +250,7 @@ powershell -ExecutionPolicy Bypass -File .\tools\assert_success.ps1
 
 ---
 
-## 🤖 Codex Handoff Instructions
+## Handoff Instructions
 
 Task: Run and validate Steps A → D of the `quad-scrape` pipeline locally.
 
@@ -312,6 +312,3 @@ If any step fails:
 
 ---
 
-✅ Next Step:
-Commit this updated `README.md` (and ensure `make_chunks_deep.py` + `audit_norm.py` exist in repo).
-Then hand it to Codex — it can follow the “Codex Handoff Instructions” verbatim to replicate your working local run.
