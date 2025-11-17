@@ -61,35 +61,34 @@ py -m poetry install --no-root
 
 ## 🚀 Local Workflow (Steps A → D)
 
-### Step A — Normalize & Validate
+### Step A — Ingest & Chunk
 
-```powershell
-py -m poetry run python -m combo normalize "tests/fixtures/coref" --out "tmp_norm"
-py -m poetry run python -m combo validate "tmp_norm"
-```
+1.  **Place raw files** into the `ingest/input` directory.
 
-✅ Produces `tmp_norm/*.normalized.json` and validation summary (`failures: 0`).
+2.  **Extract and Chunk**:
+
+    ```powershell
+    # Extract text from raw files
+    python ingest/extract_text_ocr.py ingest/input/*
+    # Chunk the extracted text
+    python ingest/make_chunks_deep.py
+    ```
+
+    ✅ Produces `ingest/output/*.json` and `ingest/output/*.jsonl` files.
 
 ---
 
-### Step B — Chunk & Embed
+### Step B — Embed
 
-1. Chunk normalized data:
+Embed the chunked data using a local deterministic adapter:
 
-   ```powershell
-   py .\make_chunks_deep.py
-   ```
+```powershell
+py -m poetry run python -m combo embed "ingest/output" `
+  --out "tmp_emb_local" `
+  --force-local --dim 64 --batch 64 --timeout 30
+```
 
-   → creates `tmp_chunks/*.jsonl`
-2. Embed using local deterministic adapter:
-
-   ```powershell
-   py -m poetry run python -m combo embed "tmp_chunks" `
-     --out "tmp_emb_local" `
-     --force-local --dim 64 --batch 64 --timeout 30
-   ```
-
-   → check `_reports/run_report.json` → `"errors": 0`, `"written" > 0`.
+→ check `_reports/run_report.json` → `"errors": 0`, `"written" > 0`.
 
 ---
 
@@ -110,13 +109,14 @@ py -m poetry run python -m combo link "tests/fixtures/coref" `
 
 ```
 quad-scrape/
-├─ tests/fixtures/coref/            # sample input
-├─ tmp_norm/                        # normalized JSON
-├─ tmp_chunks/                      # JSONL chunks
+├─ ingest/
+│  ├─ input/                       # Raw files for ingestion
+│  ├─ output/                      # Extracted and chunked files
+│  ├─ extract_text_ocr.py          # Ingest script
+│  ├─ make_chunks_deep.py          # Chunker script
+│  └─ audit_norm.py                # Audit script
 ├─ tmp_emb_local/                   # embeddings
 ├─ step_D_tests/linked_runA/        # linked outputs
-├─ make_chunks_deep.py              # helper chunker
-├─ audit_norm.py                    # schema auditor
 └─ README.md
 ```
 
@@ -126,8 +126,8 @@ quad-scrape/
 
 | Step | Dir                             | Key Artifacts                 | Pass Criteria  |
 | ---- | ------------------------------- | ----------------------------- | -------------- |
-| A    | `tmp_norm/`                     | `*.normalized.json`           | Validation OK  |
-| B    | `tmp_chunks/`, `tmp_emb_local/` | `*.jsonl`, `*.embedded.jsonl` | `written > 0`  |
+| A    | `ingest/output/`                | `*.json`, `*.jsonl`           | Files created  |
+| B    | `tmp_emb_local/`                | `*.embedded.jsonl`            | `written > 0`  |
 | D    | `step_D_tests/linked_runA/`     | `linked.*.jsonl`              | `entities > 0` |
 
 ---
@@ -244,8 +244,8 @@ powershell -ExecutionPolicy Bypass -File .\tools\assert_success.ps1
 | Symptom                                        | Likely Cause                 | Fix                                        |
 | ---------------------------------------------- | ---------------------------- | ------------------------------------------ |
 | `Missing expression after unary operator '--'` | Using Bash `\` in PowerShell | Use backtick `                             |
-| `written: 0` in embed report                   | Inputs unchunked or cached   | Run `make_chunks_deep.py`, use new out dir |
-| No text extracted                              | PDFs/images lacked OCR       | Run `extract_text_ocr.py` first            |
+| `written: 0` in embed report                   | Inputs unchunked or cached   | Run `python ingest/make_chunks_deep.py`, use new out dir |
+| No text extracted                              | PDFs/images lacked OCR       | Run `python ingest/extract_text_ocr.py` first            |
 | `posh-git` warning                             | PowerShell profile module    | Install or comment out                     |
 
 ---

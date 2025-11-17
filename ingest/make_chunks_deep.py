@@ -1,6 +1,6 @@
 ﻿import os, json, glob, pathlib, re
 
-IN_DIR, OUT_DIR = r"tmp_norm", r"tmp_chunks"
+IN_DIR, OUT_DIR = r"ingest/output", r"ingest/output"
 MAX_CHARS, OVERLAP = 1200, 200
 
 os.makedirs(OUT_DIR, exist_ok=True)

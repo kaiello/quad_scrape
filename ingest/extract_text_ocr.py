@@ -747,7 +747,7 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--dpi", type=int, default=200, help="Rasterization DPI for PDF OCR")
     p.add_argument("--min-text-chars", type=int, default=10, help="If embedded PDF text per page is shorter than this, OCR the page")
     p.add_argument("--max-pages", type=int, default=None, help="Limit number of pages for PDFs")
-    p.add_argument("--out", default=None, help="Write output to file (for multiple inputs, suffix with .txt next to each)")
+    p.add_argument("--out", default="ingest/output", help="Write output to file (for multiple inputs, suffix with .txt next to each)")
     p.add_argument("--format", choices=["txt", "json"], default="txt", help="Output format")
     p.add_argument("--pretty", action="store_true", help="Pretty-print JSON output")
     p.add_argument("--export-images", default=None, help="Directory to export embedded images (and include metadata in JSON)")
