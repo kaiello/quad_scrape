@@ -1,6 +1,6 @@
 ﻿import os, json, glob, pprint
 
-IN_DIR = r"tmp_norm"
+IN_DIR = r"ingest/output"
 
 def summarize(path):
     with open(path, "r", encoding="utf-8") as f:
