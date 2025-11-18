@@ -33,15 +33,20 @@ try:
     # PROCESSOR
     processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
     
-    # MODEL - OPTIMIZED LOADING
-    # We use 'low_cpu_mem_usage=True' to stream weights directly to the GPU,
-    # bypassing the System RAM bottleneck that causes Error 1455.
+# MODEL - SMART LOADING (Unquantized)
+    
+    # We explicitly guide Accelerate by telling it how much RAM it has available on the GPU (15 GiB)
+    max_memory_map = {0: '15GiB'} # Reserve 15 GiB for GPU 0
+    
     model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
+        # Keep bfloat16 for high quality output
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
-        low_cpu_mem_usage=True,  # <--- THE CRITICAL FIX
-        device_map="cuda"        # <--- Load directly to GPU
+        low_cpu_mem_usage=True,
+        # Use device_map="auto" with max_memory to bypass the OS memory panic (Error 1455)
+        device_map="auto",
+        max_memory=max_memory_map
     )
     
     print(f"✅ Nanonets Model Loaded on {model.device}")
