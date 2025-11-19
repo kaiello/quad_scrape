@@ -16,13 +16,13 @@ from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import (
     PdfPipelineOptions, 
     TableFormerMode, 
-    TesseractCliOcrOptions,  # <--- CRITICAL FIX: Use CLI wrapper, not Python binding
+    TesseractCliOcrOptions,
     EasyOcrOptions
 )
 from docling.datamodel.document import TableItem, TextItem, SectionHeaderItem, ListItem
 
 # Unstructured Imports (for Schema compatibility)
-from unstructured.documents.elements import Text, Table, Title, ListItem as UnstructuredListItem
+from unstructured.documents.elements import Text, Table, Title, ListItem as UnstructuredListItem, ElementMetadata
 from unstructured.staging.base import elements_to_json
 
 def setup_logging(verbose: bool) -> None:
@@ -50,7 +50,6 @@ def get_configured_converter() -> DocumentConverter:
     
     # FIX: Use TesseractCliOcrOptions instead of TesseractOcrOptions.
     # This requires 'tesseract' to be in your System PATH.
-    # If this still fails, replace with EasyOcrOptions() as a fallback.
     pipeline_options.ocr_options = TesseractCliOcrOptions() 
     
     # 3. Image Generation (Optional: helpful if you need to debug table crops later)
@@ -78,17 +77,23 @@ def map_docling_to_unstructured(docling_doc) -> List[dict]:
     for item, level in docling_doc.iterate_items():
         
         if isinstance(item, TableItem):
-            # Docling's TableFormer has already reconstructed the structure.
-            # We export the HTML to preserve that structure for downstream LLMs.
-            html_content = item.export_to_html()
+            # 1. Export content using the document context (fixes deprecation warning)
+            html_content = item.export_to_html(doc=docling_doc)
+            csv_content = item.export_to_dataframe(doc=docling_doc).to_csv(index=False)
             
-            element = Table(
-                text=item.export_to_dataframe().to_csv(index=False),
-                text_as_html=html_content
-            )
-            # Add metadata if available (e.g., page number)
+            # 2. Build Metadata (fixes TypeError)
+            # Unstructured expects 'text_as_html' inside the metadata object, not the Table constructor.
+            metadata = ElementMetadata(text_as_html=html_content)
+            
+            # Add page number if available
             if hasattr(item, "prov") and item.prov:
-                element.metadata.page_number = item.prov[0].page_no
+                metadata.page_number = item.prov[0].page_no
+
+            # 3. Create the Unstructured Element
+            element = Table(
+                text=csv_content,
+                metadata=metadata
+            )
             
             unstructured_elements.append(element)
 
@@ -122,7 +127,6 @@ def ingest_file(file_path: str) -> List[dict]:
 
 def write_output(elements: List[dict], out_path: str, pretty: bool = False):
     parent = os.path.dirname(os.path.abspath(out_path))
-    os.makedirs(parent, exist_ok=True)
     os.makedirs(parent, exist_ok=True)
     json_str = elements_to_json(elements, indent=2 if pretty else None)
     with open(out_path, "w", encoding="utf-8") as f:
