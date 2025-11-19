@@ -1,26 +1,19 @@
 from huggingface_hub import snapshot_download
-import os
 
-# We will download specifically to this simple folder
-# avoiding the deep .cache paths that are causing errors.
-LOCAL_PATH = r"C:\nanonets_model"
+# Define the model and where we want it (Hardcoded C:\Qwen_Local)
+model_id = "Qwen/Qwen2-VL-2B-Instruct"
+local_folder = r"C:/Qwen_Local"
 
-def force_download():
-    print(f"🚀 Starting Direct Download to: {LOCAL_PATH}")
-    print("   This bypasses the cache system to prevent the 'directory' error.")
-    
-    try:
-        snapshot_download(
-            repo_id="nanonets/Nanonets-OCR2-3B",
-            local_dir=LOCAL_PATH,
-            local_dir_use_symlinks=False,  # CRITICAL: Forces real files, no links
-            resume_download=True           # Smart resume if it drops
-        )
-        print(f"\n✅ SUCCESS! Model is ready at: {LOCAL_PATH}")
-        print("   (You can now delete C:\\hf to save space if you want)")
-        
-    except Exception as e:
-        print(f"\n❌ Error: {e}")
+print(f"🚀 Starting download of {model_id} to {local_folder}...")
+print("This may take a few minutes (approx 4.5 GB)...")
 
-if __name__ == "__main__":
-    force_download()
+try:
+    snapshot_download(
+        repo_id=model_id,
+        local_dir=local_folder,
+        local_dir_use_symlinks=False,  # Crucial for Windows to avoid "ghost" files
+        resume_download=True
+    )
+    print(f"✅ Download Complete! Files are safely in {local_folder}")
+except Exception as e:
+    print(f"❌ Download failed: {e}")

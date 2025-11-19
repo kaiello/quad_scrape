@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Refactored universal text extractor for documents using the `unstructured` library
-and a local Nanonets OCR2 (VLM) for complex financial tables.
+and a local Nanonets OCR2 (VLM) with 4-bit Quantization for Windows optimization.
 """
 from __future__ import annotations
 import argparse
@@ -10,7 +10,7 @@ import os
 import glob
 from typing import List, Optional
 import torch
-from transformers import AutoModelForImageTextToText, AutoProcessor
+from transformers import AutoModelForImageTextToText, AutoProcessor, BitsAndBytesConfig
 from PIL import Image
 from unstructured.documents.elements import Text
 from unstructured.partition.auto import partition
@@ -25,36 +25,41 @@ def setup_logging(verbose: bool) -> None:
 # -------------------------------------------------------------------------
 # MODEL LOADING (Global)
 # -------------------------------------------------------------------------
-MODEL_ID = r"C:\nanonets_model"
+# FIX: Use Backslashes (\) for Windows Local Paths
+MODEL_ID = r"C:\Qwen_Local"
 
 print(f"🔍 DEBUG: Script is attempting to load model from: {MODEL_ID}")
 
 try:
     # PROCESSOR
-    processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+    # Added local_files_only=True to force it to look in the folder, not the web
+    processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True, local_files_only=True)
     
-# MODEL - SMART LOADING (Unquantized)
-    
-    # We explicitly guide Accelerate by telling it how much RAM it has available on the GPU (15 GiB)
-    max_memory_map = {0: '15GiB'} # Reserve 15 GiB for GPU 0
-    
+    # CONFIG: 4-BIT QUANTIZATION
+    quantization_config = BitsAndBytesConfig(
+        load_in_4bit=True,
+        bnb_4bit_quant_type="nf4",
+        bnb_4bit_compute_dtype=torch.bfloat16
+    )
+
+    # MODEL - QUANTIZED LOADING
     model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
-        # Keep bfloat16 for high quality output
+        quantization_config=quantization_config, 
         torch_dtype=torch.bfloat16,
         trust_remote_code=True,
-        low_cpu_mem_usage=True,
-        # Use device_map="auto" with max_memory to bypass the OS memory panic (Error 1455)
+        low_cpu_mem_usage=True, 
         device_map="auto",
-        max_memory=max_memory_map
+        local_files_only=True  # <--- CRITICAL ADDITION
     )
     
-    print(f"✅ Nanonets Model Loaded on {model.device}")
+    print(f"✅ Model Loaded Successfully (4-bit Quantized) on {model.device}")
 
 except Exception as e:
     print(f"⚠️ Model failed to load: {e}")
     model = None
     processor = None
+
 # -------------------------------------------------------------------------
 # HELPER FUNCTIONS
 # -------------------------------------------------------------------------
@@ -62,7 +67,6 @@ except Exception as e:
 def has_financial_signals(elements: List[dict]) -> bool:
     """
     Heuristic: Returns True if the document contains financial table indicators.
-    Keywords: Funding, FY(Year), $, Cost, Budget
     """
     # Combine all text to scan it quickly
     full_text = " ".join([e.text for e in elements if hasattr(e, "text")]).lower()
@@ -74,7 +78,6 @@ def has_financial_signals(elements: List[dict]) -> bool:
     # 2. Check for currency symbols (often indicates tables)
     currency_hits = full_text.count("$")
     
-    # Trigger Logic: 
     if keyword_hits >= 2 or currency_hits >= 3:
         logging.info(f"💰 Financial Data Detected (Keywords: {keyword_hits}, $: {currency_hits}). Upgrading to VLM.")
         return True
@@ -104,14 +107,12 @@ def nanonets_ocr_vlm(file_path: str) -> Optional[str]:
             logging.error(f"PDF Conversion failed: {e}")
             return None
     else:
-        # It's already an image
         try:
             images.append(Image.open(file_path).convert("RGB"))
         except Exception as e:
             logging.error(f"Image open failed: {e}")
             return None
 
-    # Run Inference on each page
     full_output = []
     
     # The Prompt: Explicitly ask for HTML tables for financial data
@@ -142,33 +143,21 @@ def nanonets_ocr_vlm(file_path: str) -> Optional[str]:
     return "\n\n".join(full_output)
 
 def ingest_file(file_path: str) -> List[dict]:
-    """
-    Main ingestion logic:
-    1. Fast parse with Unstructured.
-    2. Check for scans or financial data.
-    3. If found, upgrade to VLM OCR.
-    """
     logging.info("Partitioning file: %s", file_path)
     try:
         # 1. Fast Pass (Unstructured)
         elements = partition(file_path)
         
-        # 2. Check 1: Is it a scan? (Low text count)
+        # 2. Check Triggers
         total_text = "".join([e.text for e in elements if hasattr(e, "text")])
         is_scan = len(total_text.strip()) < 50
-        
-        # 3. Check 2: Does it have complex financial tables?
         is_financial = has_financial_signals(elements)
 
         if is_scan or is_financial:
             logging.info(f"🚀 Triggering VLM Upgrade (Scan: {is_scan}, Financial: {is_financial})")
-            
             nanonets_result = nanonets_ocr_vlm(file_path)
-            
             if nanonets_result:
                 logging.info("✅ VLM Extraction Successful")
-                # Return as a single massive chunk of structured markdown/HTML/Text
-                # Downstream chunking (chunk_by_title) will handle splitting this later
                 return [Text(text=nanonets_result)]
 
         return elements
@@ -177,14 +166,9 @@ def ingest_file(file_path: str) -> List[dict]:
         return []
 
 def write_output(elements: List[dict], out_path: str, pretty: bool = False):
-    """
-    Writes the extracted elements to a JSON file.
-    """
     parent = os.path.dirname(os.path.abspath(out_path))
     os.makedirs(parent, exist_ok=True)
-
     json_str = elements_to_json(elements, indent=2 if pretty else None)
-
     with open(out_path, "w", encoding="utf-8") as f:
         f.write(json_str)
     logging.info("Wrote output to: %s", out_path)
@@ -192,22 +176,17 @@ def write_output(elements: List[dict], out_path: str, pretty: bool = False):
 # -------------------------------------------------------------------------
 # MAIN EXECUTION
 # -------------------------------------------------------------------------
-
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    """Parse command-line arguments."""
-    p = argparse.ArgumentParser(description="Extract text and metadata from documents using unstructured.")
-    p.add_argument("input", help="Path to a file or a glob pattern (e.g., 'input/*.pdf')")
-    p.add_argument("--out", default="output", help="Output directory for JSON files.")
-    p.add_argument("--pretty", action="store_true", help="Pretty-print the JSON output.")
-    p.add_argument("--verbose", action="store_true", help="Enable verbose logging.")
+    p = argparse.ArgumentParser(description="Extract text and metadata from documents.")
+    p.add_argument("input", help="Path to a file or a glob pattern")
+    p.add_argument("--out", default="output", help="Output directory")
+    p.add_argument("--pretty", action="store_true", help="Pretty-print JSON")
+    p.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     return p.parse_args(argv)
 
 def main(argv: Optional[List[str]] = None) -> int:
-    """Main entry point for the script."""
     args = parse_args(argv)
     setup_logging(args.verbose)
-
-    # Expand glob patterns
     files = glob.glob(args.input)
     if not files:
         logging.error("No files matched the input pattern: %s", args.input)
@@ -215,21 +194,14 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     for file_path in files:
         if not os.path.isfile(file_path):
-            logging.warning("Skipping non-file path: %s", file_path)
             continue
-
         elements = ingest_file(file_path)
-
         if elements:
-            # Create a unique output filename
             base_name = os.path.basename(file_path)
-            output_filename = f"{base_name}.json"
-            output_path = os.path.join(args.out, output_filename)
-
+            output_path = os.path.join(args.out, f"{base_name}.json")
             write_output(elements, output_path, pretty=args.pretty)
         else:
-            logging.warning("No elements were extracted from %s.", file_path)
-
+            logging.warning("No elements extracted from %s.", file_path)
     return 0
 
 if __name__ == "__main__":
