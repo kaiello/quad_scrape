@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "docling",
+#     "pandas",
+#     "pillow",
+#     "unstructured",
+# ]
+# ///
 """
 Integrated Docling Extractor v5 (Windows Compatible + Slide Context)
 Features:
@@ -13,10 +22,10 @@ import logging
 import glob
 import time
 from pathlib import Path
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 # Data Handling
-from PIL import Image, ImageDraw
+from PIL import Image
 
 # Docling Core
 from docling.document_converter import DocumentConverter, PdfFormatOption, ImageFormatOption
@@ -33,7 +42,6 @@ from docling.datamodel.document import (
     TextItem,
     SectionHeaderItem,
     ListItem,
-    PictureItem
 )
 # VLM Support (Optional)
 from docling.pipeline.vlm_pipeline import VlmPipeline
@@ -42,10 +50,21 @@ from docling.pipeline.vlm_pipeline import VlmPipeline
 from unstructured.documents.elements import Text, Table, Title, ListItem as UnstructuredListItem, ElementMetadata
 from unstructured.staging.base import elements_to_json
 
+# REFACTOR: Constants for magic numbers
+MERGE_DISTANCE_THRESHOLD = 50
+HEADER_SNAP_DISTANCE = 200
+DEFAULT_PADDING = 20
+MIN_IMAGE_SIZE_PX = 150
+
 def setup_logging(verbose: bool) -> None:
+    """
+    Configures the logging level and format.
+
+    Args:
+        verbose (bool): If True, sets logging level to DEBUG; otherwise INFO.
+    """
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
-    return logging.getLogger(__name__)
 
 _log = logging.getLogger(__name__)
 
@@ -53,6 +72,18 @@ _log = logging.getLogger(__name__)
 # 1. PIPELINE CONFIGURATION
 # -------------------------------------------------------------------------
 def get_configured_converter(use_vlm: bool = False) -> DocumentConverter:
+    """
+    Initializes the Docling DocumentConverter with specific pipeline options.
+
+    Configures either a VLM-based pipeline or a standard high-resolution PDF pipeline
+    with OCR and table structure analysis.
+
+    Args:
+        use_vlm (bool): Whether to use the VLM (Vision-Language Model) pipeline.
+
+    Returns:
+        DocumentConverter: The configured converter instance.
+    """
     if use_vlm:
         _log.info("🚀 Initializing VLM Pipeline...")
         pipeline_options = VlmPipelineOptions()
@@ -84,18 +115,33 @@ def get_configured_converter(use_vlm: bool = False) -> DocumentConverter:
 # -------------------------------------------------------------------------
 # 2. GEOMETRY & MERGING LOGIC
 # -------------------------------------------------------------------------
-def merge_nearby_bboxes(bboxes, distance_threshold=50):
-    """Merges bounding boxes that are physically close."""
+def merge_nearby_bboxes(
+    bboxes: List[Tuple[float, float, float, float]],
+    distance_threshold: int = MERGE_DISTANCE_THRESHOLD
+) -> List[Tuple[float, float, float, float]]:
+    """
+    Merges bounding boxes that are physically close.
+
+    Iteratively combines boxes that overlap or are within the `distance_threshold`.
+    This helps reconstruct fragmented figures or "quads".
+
+    Args:
+        bboxes (List[Tuple[float, float, float, float]]): List of bounding boxes (x0, y0, x1, y1).
+        distance_threshold (int): Distance in pixels to consider boxes as nearby.
+
+    Returns:
+        List[Tuple[float, float, float, float]]: A list of merged bounding boxes.
+    """
     if not bboxes:
         return []
 
-    # Ensure standard [x0, y0, x1, y1]
     merged = []
     working_set = list(bboxes)
 
     while working_set:
         current = working_set.pop(0)
         changed = True
+        # REFACTOR: Inner loop ensures we exhaustively merge overlapping boxes with 'current'
         while changed:
             changed = False
             rest = []
@@ -118,10 +164,26 @@ def merge_nearby_bboxes(bboxes, distance_threshold=50):
         merged.append(current)
     return merged
 
-def include_header_context(doc: DoclingDocument, page_no: int, bbox: Tuple[float, float, float, float], max_distance: int = 200) -> Tuple[float, float, float, float]:
+def include_header_context(
+    doc: DoclingDocument,
+    page_no: int,
+    bbox: Tuple[float, float, float, float],
+    max_distance: int = HEADER_SNAP_DISTANCE
+) -> Tuple[float, float, float, float]:
     """
-    Looks for a Section Header immediately above the image bbox and expands the bbox to include it.
-    This gives the image "Context" (e.g., Slide Title).
+    Expands a bounding box upwards to include the nearest section header.
+
+    This provides context (e.g., Slide Title) for images or figures that might
+    otherwise be isolated.
+
+    Args:
+        doc (DoclingDocument): The parsed document object containing text items.
+        page_no (int): The page number (1-based) where the bbox is located.
+        bbox (Tuple[float, float, float, float]): The initial bounding box (x0, y0, x1, y1).
+        max_distance (int): Maximum vertical distance to search for a header above.
+
+    Returns:
+        Tuple[float, float, float, float]: The expanded bounding box including the header if found.
     """
     x0, y0, x1, y1 = bbox
     best_header_y = y0
@@ -151,8 +213,24 @@ def include_header_context(doc: DoclingDocument, page_no: int, bbox: Tuple[float
 
     return (x0, best_header_y, x1, y1)
 
-def add_padding(bbox, width, height, padding=15):
-    """Adds safe padding without going out of bounds."""
+def add_padding(
+    bbox: Tuple[float, float, float, float],
+    width: int,
+    height: int,
+    padding: int = 15
+) -> Tuple[float, float, float, float]:
+    """
+    Adds padding to a bounding box, ensuring it stays within image boundaries.
+
+    Args:
+        bbox (Tuple[float, float, float, float]): The bounding box (x0, y0, x1, y1).
+        width (int): The width of the image/page.
+        height (int): The height of the image/page.
+        padding (int): The amount of padding in pixels to add on all sides.
+
+    Returns:
+        Tuple[float, float, float, float]: The padded bounding box.
+    """
     return (
         max(0, bbox[0] - padding),
         max(0, bbox[1] - padding),
@@ -163,7 +241,17 @@ def add_padding(bbox, width, height, padding=15):
 # -------------------------------------------------------------------------
 # 3. ASSET EXPORT
 # -------------------------------------------------------------------------
-def export_enhanced_assets(doc: DoclingDocument, output_dir: Path, base_name: str):
+def export_enhanced_assets(doc: DoclingDocument, output_dir: Path, base_name: str) -> None:
+    """
+    Exports tables as CSVs and figures as cropped images.
+
+    Applies smart merging and header snapping to figures to improve context.
+
+    Args:
+        doc (DoclingDocument): The processed Docling document.
+        output_dir (Path): Directory where assets should be saved.
+        base_name (str): Base filename for the exported assets.
+    """
     tables_dir = output_dir / "tables"
     figures_dir = output_dir / "figures"
     tables_dir.mkdir(exist_ok=True)
@@ -173,7 +261,9 @@ def export_enhanced_assets(doc: DoclingDocument, output_dir: Path, base_name: st
     for i, table in enumerate(doc.tables):
         try:
             table.export_to_dataframe().to_csv(tables_dir / f"{base_name}_table_{i+1}.csv", index=False)
-        except: pass
+        except Exception as e:
+            # REFACTOR: Log specific errors instead of silent fail
+            _log.warning(f"Failed to export table {i+1}: {e}")
 
     # Export Figures (Smart Merge + Header Snap)
     for page_no, page in doc.pages.items():
@@ -190,35 +280,46 @@ def export_enhanced_assets(doc: DoclingDocument, output_dir: Path, base_name: st
                 page_bboxes.append(picture.prov[0].bbox.as_tuple())
 
         # 2. Merge "Quad" parts
-        merged_bboxes = merge_nearby_bboxes(page_bboxes, distance_threshold=50)
+        merged_bboxes = merge_nearby_bboxes(page_bboxes, distance_threshold=MERGE_DISTANCE_THRESHOLD)
 
         for i, bbox in enumerate(merged_bboxes):
             w, h = bbox[2]-bbox[0], bbox[3]-bbox[1]
 
             # Filter artifacts (<150px)
-            if w < 150 or h < 150: continue
+            if w < MIN_IMAGE_SIZE_PX or h < MIN_IMAGE_SIZE_PX: continue
 
             # 3. ENHANCEMENT: Snap to Header
             # Look for a title above the image to give it context
-            bbox_with_header = include_header_context(doc, page_no, bbox)
+            bbox_with_header = include_header_context(doc, page_no, bbox, max_distance=HEADER_SNAP_DISTANCE)
 
             # 4. ENHANCEMENT: Add Padding
-            final_bbox = add_padding(bbox_with_header, page_w, page_h, padding=20)
+            final_bbox = add_padding(bbox_with_header, page_w, page_h, padding=DEFAULT_PADDING)
 
             try:
                 crop = full_page_img.crop(final_bbox)
                 crop.save(figures_dir / f"{base_name}_pg{page_no}_smart_fig_{i+1}.png")
                 _log.info(f"Saved Smart Figure (with Header): {base_name}_pg{page_no}_smart_fig_{i+1}.png")
             except Exception as e:
-                _log.warning(f"Crop failed: {e}")
+                _log.warning(f"Crop failed for figure {i+1} on page {page_no}: {e}")
 
 # -------------------------------------------------------------------------
 # 4. MAIN LOGIC
 # -------------------------------------------------------------------------
 def map_docling_to_unstructured(docling_doc: DoclingDocument) -> List[dict]:
-    """Maps Docling structure to Unstructured.io Element objects."""
+    """
+    Maps Docling document structure to Unstructured.io Element objects.
+
+    Iterates through Docling items and converts them to Unstructured equivalents
+    (Text, Table, Title, ListItem) with metadata.
+
+    Args:
+        docling_doc (DoclingDocument): The source Docling document.
+
+    Returns:
+        List[dict]: A list of Unstructured element objects (typically serialized to JSON later).
+    """
     unstructured_elements = []
-    for item, level in docling_doc.iterate_items():
+    for item, _ in docling_doc.iterate_items():
         metadata = ElementMetadata()
         if hasattr(item, "prov") and item.prov:
             metadata.page_number = item.prov[0].page_no
@@ -229,7 +330,9 @@ def map_docling_to_unstructured(docling_doc: DoclingDocument) -> List[dict]:
                 html = item.export_to_html(doc=docling_doc)
                 metadata.text_as_html = html
                 unstructured_elements.append(Table(text=csv, metadata=metadata))
-            except: pass
+            except Exception as e:
+                 # REFACTOR: Log error but continue
+                 _log.warning(f"Failed to convert table item to unstructured: {e}")
         elif isinstance(item, SectionHeaderItem):
             unstructured_elements.append(Title(text=item.text, metadata=metadata))
         elif isinstance(item, ListItem):
@@ -239,7 +342,19 @@ def map_docling_to_unstructured(docling_doc: DoclingDocument) -> List[dict]:
 
     return unstructured_elements
 
-def process_file(file_path: Path, output_root: Path, converter: DocumentConverter, pretty: bool):
+def process_file(file_path: Path, output_root: Path, converter: DocumentConverter, pretty: bool) -> None:
+    """
+    Processes a single file through the Docling pipeline and exports results.
+
+    Converts the document, saves a Markdown export, maps to Unstructured JSON,
+    and exports enhanced assets (images, tables).
+
+    Args:
+        file_path (Path): Path to the input file.
+        output_root (Path): Root directory for output.
+        converter (DocumentConverter): Configured Docling converter.
+        pretty (bool): Whether to indent the JSON output.
+    """
     _log.info(f"📄 Processing: {file_path.name}")
     try:
         file_output_dir = output_root / f"output_{file_path.stem}"
@@ -265,19 +380,31 @@ def process_file(file_path: Path, output_root: Path, converter: DocumentConverte
         _log.info(f"🎉 Done! Saved to: {file_output_dir}")
 
     except Exception as e:
-        _log.error(f"❌ Failed: {e}", exc_info=True)
+        _log.error(f"❌ Failed to process {file_path.name}: {e}", exc_info=True)
 
-def main():
+def main() -> None:
+    """
+    Main entry point for the Docling extraction script.
+
+    Parses command-line arguments and orchestrates the file processing pipeline.
+    """
     p = argparse.ArgumentParser(description="Docling V5: Windows Context-Aware")
-    p.add_argument("input", help="File path or glob")
-    p.add_argument("--out", default="output", help="Output dir")
+    p.add_argument("input", help="File path or glob pattern (e.g., 'data/*.pdf')")
+    p.add_argument("--out", default="output", help="Output directory")
     p.add_argument("--vlm", action="store_true", help="Use Granite VLM (Optional)")
-    p.add_argument("--pretty", action="store_true", help="Pretty JSON")
-    p.add_argument("--verbose", action="store_true")
+    p.add_argument("--pretty", action="store_true", help="Pretty JSON output")
+    p.add_argument("--verbose", action="store_true", help="Enable verbose logging")
     args = p.parse_args()
 
     setup_logging(args.verbose)
-    files = [Path(f) for f in glob.glob(str(args.input))]
+
+    # REFACTOR: Use descriptive variable names
+    input_pattern = str(args.input)
+    files = [Path(f) for f in glob.glob(input_pattern)]
+
+    if not files:
+        _log.warning(f"No files found matching pattern: {input_pattern}")
+        return
 
     converter = get_configured_converter(use_vlm=args.vlm)
     output_root = Path(args.out)
