@@ -15,7 +15,12 @@ from unstructured.chunking.title import chunk_by_title
 from unstructured.staging.base import elements_from_json
 
 def setup_logging(verbose: bool = False) -> None:
-    """Configure logging based on verbosity."""
+    """
+    Configures the logging level and format.
+
+    Args:
+        verbose (bool): If True, sets logging level to DEBUG; otherwise INFO.
+    """
     level = logging.DEBUG if verbose else logging.INFO
     logging.basicConfig(level=level, format="%(levelname)s: %(message)s")
 
@@ -28,11 +33,17 @@ def create_asset_chunk(
     """
     Creates a standardized chunk record for non-text assets (Tables/Images).
 
+    Constructs a JSON-compatible dictionary representing a chunk, including
+    metadata about the asset source and type.
+
     Args:
-        doc_id: The document identifier.
-        asset_path: Path to the asset file (image or csv).
-        asset_type: 'table' or 'image'.
-        chunk_index: The sequential ID for this chunk.
+        doc_id (str): The document identifier.
+        asset_path (Path): Path to the asset file (image or csv).
+        asset_type (str): Type of asset, e.g., 'table' or 'image'.
+        chunk_index (int): The sequential ID for this chunk.
+
+    Returns:
+        Dict[str, Any]: A dictionary representing the asset chunk.
     """
     # Relative path for portability
     try:
@@ -44,7 +55,7 @@ def create_asset_chunk(
         "filename": asset_path.name,
         "file_path": str(rel_path),
         "type": asset_type,
-        "page_number": None # TODO: Parse page number from filename if strictly named (e.g., _pg1_)
+        "page_number": None
     }
 
     # Attempt to extract page number from standard naming convention: "{base}_pg{N}_{type}_{I}"
@@ -65,8 +76,9 @@ def create_asset_chunk(
                 # limit CSV text to avoid token limits, or take first 10 lines
                 csv_content = f.read()
                 text_content = f"Table Data:\n{csv_content}"
-        except Exception:
-            pass
+        except Exception as e:
+             # REFACTOR: Catch specific exception and log warning
+             logging.warning(f"Could not read table content from {asset_path}: {e}")
 
     return {
         "doc_id": doc_id,
@@ -75,8 +87,16 @@ def create_asset_chunk(
         "metadata": metadata,
     }
 
-def main():
-    """Main function to process and chunk JSON files + Assets recursively."""
+def main() -> int:
+    """
+    Main function to process and chunk JSON files + Assets recursively.
+
+    Reads extracted JSON files, chunks the text content, and injects
+    corresponding table and figure assets as separate chunks.
+
+    Returns:
+        int: Exit code (0 for success, 1 for failure).
+    """
     parser = argparse.ArgumentParser(description="Chunk extracted JSON files and assets.")
     parser.add_argument("--input", default="ingest/output", help="Directory containing extracted output folders")
     parser.add_argument("--output", default="chunks", help="Directory to save chunked JSONL files")
@@ -85,20 +105,20 @@ def main():
 
     setup_logging(args.verbose)
 
-    in_dir = Path(args.input)
-    out_dir = Path(args.output)
+    input_dir = Path(args.input)
+    output_dir = Path(args.output)
 
-    if not in_dir.exists():
-        logging.error("Input directory not found: %s", in_dir)
+    if not input_dir.exists():
+        logging.error("Input directory not found: %s", input_dir)
         return 1
 
-    out_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Find all source JSON files (the main entry point for each doc)
-    json_files = list(in_dir.rglob("*.json"))
+    json_files = list(input_dir.rglob("*.json"))
 
     if not json_files:
-        logging.warning("No .json files found in %s (recursive search).", in_dir)
+        logging.warning("No .json files found in %s (recursive search).", input_dir)
         return 0
 
     logging.info(f"Found {len(json_files)} documents to process.")
@@ -170,23 +190,24 @@ def main():
                 logging.warning("No content found for file: %s", file_path)
                 continue
 
-            out_path = out_dir / f"{doc_id}.jsonl"
-            with open(out_path, "w", encoding="utf-8") as f:
+            output_path = output_dir / f"{doc_id}.jsonl"
+            with open(output_path, "w", encoding="utf-8") as f:
                 for record in chunk_records:
                     f.write(json.dumps(record, ensure_ascii=False) + "\n")
                     written_chunks += 1
 
-            logging.info("  -> Wrote %d total chunks (Text+Tables+Images) to %s", len(chunk_records), out_path.name)
+            logging.info("  -> Wrote %d total chunks (Text+Tables+Images) to %s", len(chunk_records), output_path.name)
             processed_files += 1
 
         except Exception as e:
+            # REFACTOR: Catch specific exceptions where possible, or at least log traceback
             logging.error("Failed to process %s: %s", file_path, e, exc_info=True)
 
     logging.info("-" * 30)
     logging.info("Processing Complete.")
     logging.info("Files Processed: %d", processed_files)
     logging.info("Total Chunks Written: %d", written_chunks)
-    logging.info("Output Directory: %s", out_dir.resolve())
+    logging.info("Output Directory: %s", output_dir.resolve())
 
     return 0
 
