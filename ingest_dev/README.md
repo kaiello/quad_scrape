@@ -25,20 +25,22 @@ This is the "V2" pipeline using **Docling** for better layout parsing and asset 
 
 ## 3. Usage Guide
 
-### Step 1: Extract
-Run the extraction script on your input files (PDFs or Images).
+### 🚀 Running the Scripts (Standalone)
+These scripts use PEP 723 inline metadata. You can run them without manually creating a virtual environment if you have `uv` or `pipx` installed.
 
+#### Option A: Using `uv` (Recommended)
 ```bash
-# Example: Process all PDFs in ingest/input/
-python3 ingest_dev/extract_v4_1_docling.py "ingest/input/*.pdf" --out ingest/output
+# Run Extractor
+uv run ingest_dev/extract_v4_1_docling.py "ingest/input/*.pdf" --out "ingest/output"
+
+# Run Chunker
+uv run ingest_dev/make_chunks_deep.py --input "ingest/output" --output "ingest/chunks"
 ```
 
-### Step 2: Chunk and Inject Assets
-Run the chunking script to process the extracted content and assets.
+#### Option B: Using `pipx`
 
 ```bash
-# Example: Chunk content from ingest/output/ and save to ingest/chunks/
-python3 ingest_dev/make_chunks_deep.py --input ingest/output --output ingest/chunks
+pipx run ingest_dev/extract_v4_1_docling.py ...
 ```
 
 ## 4. Output Schema
