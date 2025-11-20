@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Integrated Docling Extractor v3 (Quad-Optimized)
+Integrated Docling Extractor v5 (Windows Compatible + Slide Context)
 Features:
-1. Smart Figure Merging: Reconstructs "Quads" from fragmented detections.
-2. Artifact Filtering: Ignores small "text box" images.
-3. High-Res Processing: Increases image scale for better detection.
-4. Standard + VLM Support.
+1. Header Snapping: Automatically expands figures to include the Slide Title above them.
+2. Safety Padding: Adds breathing room around crops so text isn't cut off.
+3. Smart Figure Merging: Reconstructs "Quads" from fragmented detections.
+4. Artifact Filtering: Ignores small "text box" images.
 """
 from __future__ import annotations
 import argparse
@@ -13,13 +13,13 @@ import logging
 import glob
 import time
 from pathlib import Path
-from typing import List
+from typing import List, Tuple
 
 # Data Handling
 from PIL import Image, ImageDraw
 
 # Docling Core
-from docling.document_converter import DocumentConverter, PdfFormatOption
+from docling.document_converter import DocumentConverter, PdfFormatOption, ImageFormatOption
 from docling.datamodel.base_models import InputFormat
 from docling.datamodel.pipeline_options import (
     PdfPipelineOptions, 
@@ -35,9 +35,8 @@ from docling.datamodel.document import (
     ListItem,
     PictureItem
 )
-# VLM Support
+# VLM Support (Optional)
 from docling.pipeline.vlm_pipeline import VlmPipeline
-from docling.datamodel import vlm_model_specs
 
 # Unstructured Support
 from unstructured.documents.elements import Text, Table, Title, ListItem as UnstructuredListItem, ElementMetadata
@@ -51,27 +50,16 @@ def setup_logging(verbose: bool) -> None:
 _log = logging.getLogger(__name__)
 
 # -------------------------------------------------------------------------
-# 1. PIPELINE CONFIGURATION (Optimized)
+# 1. PIPELINE CONFIGURATION
 # -------------------------------------------------------------------------
 def get_configured_converter(use_vlm: bool = False) -> DocumentConverter:
     if use_vlm:
-        _log.info("🚀 Initializing VLM Pipeline (Granite Docling)...")
-        pipeline_options = VlmPipelineOptions(
-            vlm_options=vlm_model_specs.GRANITEDOCLING_MLX 
-        )
-        # VLM already handles visuals well, but we enforce high res
-        pipeline_options.images_scale = 2.0 
-        
+        _log.info("🚀 Initializing VLM Pipeline...")
+        pipeline_options = VlmPipelineOptions()
         return DocumentConverter(
             format_options={
-                InputFormat.PDF: PdfFormatOption(
-                    pipeline_cls=VlmPipeline, 
-                    pipeline_options=pipeline_options
-                ),
-                InputFormat.IMAGE: PdfFormatOption(
-                    pipeline_cls=VlmPipeline,
-                    pipeline_options=pipeline_options
-                )
+                InputFormat.PDF: PdfFormatOption(pipeline_cls=VlmPipeline, pipeline_options=pipeline_options),
+                InputFormat.IMAGE: ImageFormatOption(pipeline_cls=VlmPipeline, pipeline_options=pipeline_options)
             }
         )
     else:
@@ -82,8 +70,7 @@ def get_configured_converter(use_vlm: bool = False) -> DocumentConverter:
         pipeline_options.do_ocr = True
         pipeline_options.ocr_options = TesseractCliOcrOptions()
         
-        # OPTIMIZATION 1: Increase Image Scale (Default is 1.0)
-        # Setting to 2.0 (144 DPI) helps the model see boundaries of Quads better
+        # High Res for better OCR and prettier crops
         pipeline_options.images_scale = 2.0 
         pipeline_options.generate_page_images = True 
         pipeline_options.generate_picture_images = True
@@ -95,38 +82,29 @@ def get_configured_converter(use_vlm: bool = False) -> DocumentConverter:
         )
 
 # -------------------------------------------------------------------------
-# 2. SMART ASSET EXTRACTION (The "Quad" Fix)
+# 2. GEOMETRY & MERGING LOGIC
 # -------------------------------------------------------------------------
 def merge_nearby_bboxes(bboxes, distance_threshold=50):
-    """
-    Merges bounding boxes that are close to each other. 
-    Useful for reconstructing Quads that were split into 4 parts.
-    """
+    """Merges bounding boxes that are physically close."""
     if not bboxes:
         return []
-
-    # Convert to [x0, y0, x1, y1] format for easier math
-    # Docling bbox is usually (l, b, r, t) or similar. 
-    # We assume standard PIL coordinates here (left, top, right, bottom)
     
+    # Ensure standard [x0, y0, x1, y1]
     merged = []
-    while bboxes:
-        # Start with the first box
-        current = bboxes.pop(0)
+    working_set = list(bboxes)
+    
+    while working_set:
+        current = working_set.pop(0)
         changed = True
-        
         while changed:
             changed = False
             rest = []
-            for other in bboxes:
-                # Check distance
-                # Horizontal overlap or close?
+            for other in working_set:
+                # Check Overlaps/Proximity
                 h_overlap = (current[0] <= other[2] + distance_threshold) and (other[0] <= current[2] + distance_threshold)
-                # Vertical overlap or close?
                 v_overlap = (current[1] <= other[3] + distance_threshold) and (other[1] <= current[3] + distance_threshold)
                 
                 if h_overlap and v_overlap:
-                    # Merge
                     current = (
                         min(current[0], other[0]),
                         min(current[1], other[1]),
@@ -136,64 +114,107 @@ def merge_nearby_bboxes(bboxes, distance_threshold=50):
                     changed = True
                 else:
                     rest.append(other)
-            bboxes = rest
+            working_set = rest
         merged.append(current)
-        
     return merged
 
-def export_smart_assets(doc: DoclingDocument, output_dir: Path, base_name: str, min_size: int = 200):
+def include_header_context(doc: DoclingDocument, page_no: int, bbox: Tuple[float, float, float, float], max_distance: int = 200) -> Tuple[float, float, float, float]:
     """
-    Exports merged figures and filters out small artifacts.
+    Looks for a Section Header immediately above the image bbox and expands the bbox to include it.
+    This gives the image "Context" (e.g., Slide Title).
     """
+    x0, y0, x1, y1 = bbox
+    best_header_y = y0
+    
+    # Scan text items for headers on this page
+    for item in doc.texts:
+        if not (hasattr(item, "prov") and item.prov and item.prov[0].page_no == page_no):
+            continue
+            
+        # We are interested in Headers or Large Text roughly aligned with the image
+        # Docling classifies headers as SectionHeaderItem
+        if isinstance(item, SectionHeaderItem) or isinstance(item, TextItem):
+            h_bbox = item.prov[0].bbox.as_tuple() # l, t, r, b
+            h_x0, h_y0, h_x1, h_y1 = h_bbox
+            
+            # Check if it is ABOVE the image
+            if h_y1 < y0:
+                # Check vertical distance (is it close enough?)
+                dist = y0 - h_y1
+                if dist < max_distance:
+                    # Check horizontal alignment (does it overlap mostly?)
+                    # Simple check: is the header roughly in the same vertical column?
+                    # We'll be generous: if it's above, we take it.
+                    if h_y0 < best_header_y:
+                        best_header_y = h_y0
+                        _log.info(f"  ↳ Snapped to header: '{item.text[:30]}...'")
+
+    return (x0, best_header_y, x1, y1)
+
+def add_padding(bbox, width, height, padding=15):
+    """Adds safe padding without going out of bounds."""
+    return (
+        max(0, bbox[0] - padding),
+        max(0, bbox[1] - padding),
+        min(width, bbox[2] + padding),
+        min(height, bbox[3] + padding)
+    )
+
+# -------------------------------------------------------------------------
+# 3. ASSET EXPORT
+# -------------------------------------------------------------------------
+def export_enhanced_assets(doc: DoclingDocument, output_dir: Path, base_name: str):
     tables_dir = output_dir / "tables"
     figures_dir = output_dir / "figures"
     tables_dir.mkdir(exist_ok=True)
     figures_dir.mkdir(exist_ok=True)
 
-    # --- Export Tables ---
+    # Export Tables
     for i, table in enumerate(doc.tables):
         try:
-            table_df = table.export_to_dataframe()
-            csv_path = tables_dir / f"{base_name}_table_{i+1}.csv"
-            table_df.to_csv(csv_path, index=False)
-        except Exception:
-            pass
+            table.export_to_dataframe().to_csv(tables_dir / f"{base_name}_table_{i+1}.csv", index=False)
+        except: pass
 
-    # --- Export Figures (With Merging & Filtering) ---
+    # Export Figures (Smart Merge + Header Snap)
     for page_no, page in doc.pages.items():
         if not (page.image and page.image.pil_image):
             continue
             
         full_page_img = page.image.pil_image
+        page_w, page_h = full_page_img.size
         
-        # 1. Collect all picture bboxes on this page
+        # 1. Collect picture boxes
         page_bboxes = []
         for picture in doc.pictures:
             if picture.prov and picture.prov[0].page_no == page_no:
-                bbox = picture.prov[0].bbox.as_tuple() # (L, T, R, B)
-                page_bboxes.append(bbox)
+                page_bboxes.append(picture.prov[0].bbox.as_tuple())
         
-        # 2. Merge close boxes (Reconstruct the Quad)
-        merged_bboxes = merge_nearby_bboxes(page_bboxes, distance_threshold=50) # 50px gap tolerance
+        # 2. Merge "Quad" parts
+        merged_bboxes = merge_nearby_bboxes(page_bboxes, distance_threshold=50)
         
-        # 3. Export Merged Figures
         for i, bbox in enumerate(merged_bboxes):
-            w = bbox[2] - bbox[0]
-            h = bbox[3] - bbox[1]
+            w, h = bbox[2]-bbox[0], bbox[3]-bbox[1]
             
-            # OPTIMIZATION 2: Filter Small Artifacts (Text boxes detected as images)
-            if w < min_size or h < min_size:
-                _log.info(f"Skipping small artifact on pg{page_no} ({int(w)}x{int(h)})")
-                continue
-                
-            try:
-                cropped_fig = full_page_img.crop(bbox)
-                fig_path = figures_dir / f"{base_name}_pg{page_no}_merged_figure_{i+1}.png"
-                cropped_fig.save(fig_path)
-                _log.info(f"Saved Smart-Merged Figure: {fig_path.name}")
-            except Exception as e:
-                _log.warning(f"Failed to save figure: {e}")
+            # Filter artifacts (<150px)
+            if w < 150 or h < 150: continue
 
+            # 3. ENHANCEMENT: Snap to Header
+            # Look for a title above the image to give it context
+            bbox_with_header = include_header_context(doc, page_no, bbox)
+            
+            # 4. ENHANCEMENT: Add Padding
+            final_bbox = add_padding(bbox_with_header, page_w, page_h, padding=20)
+            
+            try:
+                crop = full_page_img.crop(final_bbox)
+                crop.save(figures_dir / f"{base_name}_pg{page_no}_smart_fig_{i+1}.png")
+                _log.info(f"Saved Smart Figure (with Header): {base_name}_pg{page_no}_smart_fig_{i+1}.png")
+            except Exception as e:
+                _log.warning(f"Crop failed: {e}")
+
+# -------------------------------------------------------------------------
+# 4. MAIN LOGIC
+# -------------------------------------------------------------------------
 def map_docling_to_unstructured(docling_doc: DoclingDocument) -> List[dict]:
     """Maps Docling structure to Unstructured.io Element objects."""
     unstructured_elements = []
@@ -224,37 +245,33 @@ def process_file(file_path: Path, output_root: Path, converter: DocumentConverte
         file_output_dir = output_root / f"output_{file_path.stem}"
         file_output_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1. Convert
         start_time = time.time()
         result = converter.convert(file_path)
         doc = result.document
         _log.info(f"✅ Converted in {time.time() - start_time:.2f}s")
 
-        # 2. Exports
-        md_path = file_output_dir / f"{file_path.stem}.md"
-        with open(md_path, "w", encoding="utf-8") as f:
+        # Standard Exports
+        with open(file_output_dir / f"{file_path.stem}.md", "w", encoding="utf-8") as f:
             f.write(doc.export_to_markdown())
         
         elements = map_docling_to_unstructured(doc)
-        json_path = file_output_dir / f"{file_path.stem}.json"
-        json_str = elements_to_json(elements, indent=2 if pretty else None)
-        with open(json_path, "w", encoding="utf-8") as f:
-            f.write(json_str)
+        with open(file_output_dir / f"{file_path.stem}.json", "w", encoding="utf-8") as f:
+            f.write(elements_to_json(elements, indent=2 if pretty else None))
 
-        # 3. Smart Assets
-        _log.info("🖼️  Running Smart Asset Extraction (Merging & Filtering)...")
-        export_smart_assets(doc, file_output_dir, file_path.stem, min_size=150) # Ignore imgs < 150px
-
+        # Enhanced Assets
+        _log.info("🖼️  Exporting Enhanced Assets (Smart Merge + Header Snap)...")
+        export_enhanced_assets(doc, file_output_dir, file_path.stem)
+        
         _log.info(f"🎉 Done! Saved to: {file_output_dir}")
 
     except Exception as e:
         _log.error(f"❌ Failed: {e}", exc_info=True)
 
 def main():
-    p = argparse.ArgumentParser(description="Docling V3: Quad Optimized")
+    p = argparse.ArgumentParser(description="Docling V5: Windows Context-Aware")
     p.add_argument("input", help="File path or glob")
     p.add_argument("--out", default="output", help="Output dir")
-    p.add_argument("--vlm", action="store_true", help="Use Granite VLM (Recommended for Visuals)")
+    p.add_argument("--vlm", action="store_true", help="Use Granite VLM (Optional)")
     p.add_argument("--pretty", action="store_true", help="Pretty JSON")
     p.add_argument("--verbose", action="store_true")
     args = p.parse_args()
