@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.10"
+# dependencies = [
+#     "docling",
+#     "pandas",
+#     "pillow",
+#     "unstructured",
+# ]
+# ///
 """
 Integrated Docling Extractor v5 (Windows Compatible + Slide Context)
 Features:
